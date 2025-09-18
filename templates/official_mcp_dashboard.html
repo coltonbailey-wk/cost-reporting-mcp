@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Cost Explorer MCP Dashboard - Management Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <i class="fas fa-chart-line text-blue-600 text-2xl mr-3"></i>
+                    <h1 class="text-2xl font-bold text-gray-900">AWS Cost Explorer MCP - Management Dashboard</h1>
+                    <span class="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">AWS MCP</span>
+                </div>
+                <div class="text-sm text-gray-500">
+                    Powered by AWS Labs MCP Server
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Enhanced Query Section -->
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-robot mr-2"></i>AWS MCP - Cost Analysis
+            </h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label for="query" class="block text-sm font-medium text-gray-700 mb-2">
+                        Ask questions about your AWS costs using the AWS MCP server:
+                    </label>
+                    <textarea 
+                        id="query" 
+                        rows="4" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Examples:
+• Show me my AWS costs for the last 3 months grouped by service
+• Break down my S3 costs by storage class for Q1 2025
+• What were my costs for reserved instances vs on-demand in May?
+• Forecast my AWS costs for next month
+• Compare my AWS costs between April and May 2025
+• Why did my AWS bill increase in June compared to May?"
+                    ></textarea>
+                </div>
+                
+                <button 
+                    id="submitQuery" 
+                    class="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out font-medium"
+                >
+                    <i class="fas fa-brain mr-2"></i>Analyze with AWS MCP
+                </button>
+            </div>
+        </div>
+
+        <!-- Official MCP Tools -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <button class="quick-analysis bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition duration-150 ease-in-out text-left" data-query="Show me my AWS costs for the last 3 months grouped by service">
+                <i class="fas fa-chart-pie text-blue-600 text-2xl mb-3"></i>
+                <h3 class="font-semibold text-gray-900 mb-2">Cost Analysis</h3>
+                <p class="text-sm text-gray-600">AWS Cost Explorer data</p>
+            </button>
+            
+            <button class="quick-analysis bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition duration-150 ease-in-out text-left" data-query="Forecast my AWS costs for next month">
+                <i class="fas fa-chart-line text-purple-600 text-2xl mb-3"></i>
+                <h3 class="font-semibold text-gray-900 mb-2">Cost Forecasting</h3>
+                <p class="text-sm text-gray-600">Predict future spending</p>
+            </button>
+            
+            <button class="quick-analysis bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition duration-150 ease-in-out text-left" data-query="Compare my AWS costs between last month and this month">
+                <i class="fas fa-balance-scale text-green-600 text-2xl mb-3"></i>
+                <h3 class="font-semibold text-gray-900 mb-2">Cost Comparison</h3>
+                <p class="text-sm text-gray-600">Compare time periods</p>
+            </button>
+            
+            <button class="quick-analysis bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition duration-150 ease-in-out text-left" data-query="What are the cost drivers for my recent spending changes?">
+                <i class="fas fa-search text-red-600 text-2xl mb-3"></i>
+                <h3 class="font-semibold text-gray-900 mb-2">Cost Drivers</h3>
+                <p class="text-sm text-gray-600">Identify spending drivers</p>
+            </button>
+        </div>
+
+        <!-- Official MCP Tools List -->
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-cogs mr-2"></i>Available AWS Cost Explorer MCP Tools
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">get_today_date</h4>
+                    <p class="text-sm text-gray-600">Get current date for time-based queries</p>
+                </div>
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">get_dimension_values</h4>
+                    <p class="text-sm text-gray-600">Get available values for dimensions (SERVICE, REGION)</p>
+                </div>
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">get_tag_values</h4>
+                    <p class="text-sm text-gray-600">Get available values for tag keys</p>
+                </div>
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">get_cost_and_usage</h4>
+                    <p class="text-sm text-gray-600">Retrieve AWS cost and usage data</p>
+                </div>
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">get_cost_and_usage_comparisons</h4>
+                    <p class="text-sm text-gray-600">Compare costs between time periods</p>
+                </div>
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">get_cost_comparison_drivers</h4>
+                    <p class="text-sm text-gray-600">Analyze cost change drivers</p>
+                </div>
+                <div class="p-4 border border-gray-200 rounded-lg">
+                    <h4 class="font-medium text-gray-900 mb-2">get_cost_forecast</h4>
+                    <p class="text-sm text-gray-600">Generate cost forecasts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="hidden bg-white rounded-lg shadow-sm border p-8 text-center">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p class="mt-2 text-gray-600">AWS Cost Explorer MCP is analyzing your costs...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="hidden">
+            <!-- Query Summary -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                    <i class="fas fa-search mr-2"></i>Analysis Results
+                </h3>
+                <p id="querySummary" class="text-gray-600"></p>
+            </div>
+
+            <!-- Enhanced Data Display -->
+            <div id="dataDisplay" class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Visual Display Section -->
+                    <div class="bg-white rounded-lg shadow-sm border">
+                        <button id="visualToggle" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
+                                <h3 class="font-semibold text-gray-900">Visual Analysis</h3>
+                            </div>
+                            <i id="visualChevron" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                        </button>
+                        <div id="visualContent" class="px-6 pb-6 block">
+                            <div id="visualData" class="space-y-4">
+                                <!-- Charts and tables will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Raw JSON Section -->
+                    <div class="bg-white rounded-lg shadow-sm border">
+                        <button id="jsonToggle" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-code text-green-600 mr-3"></i>
+                                <h3 class="font-semibold text-gray-900">Raw Data</h3>
+                            </div>
+                            <i id="jsonChevron" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                        </button>
+                        <div id="jsonContent" class="px-6 pb-6 block">
+                            <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-auto">
+                                <pre id="rawJson" class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights -->
+            <div id="insightsSection" class="bg-white rounded-lg shadow-sm border p-6 hidden">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-lightbulb mr-2"></i>AWS MCP Insights
+                </h3>
+                <ul id="insights" class="space-y-2">
+                    <!-- Insights will be inserted here -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex">
+                <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-0.5"></i>
+                <div>
+                    <h3 class="text-sm font-medium text-red-800">Error</h3>
+                    <p id="errorMessage" class="mt-1 text-sm text-red-700"></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Quick analysis buttons
+        document.querySelectorAll('.quick-analysis').forEach(button => {
+            button.addEventListener('click', () => {
+                const query = button.getAttribute('data-query');
+                document.getElementById('query').value = query;
+                submitQuery();
+            });
+        });
+
+        // Submit query function
+        async function submitQuery() {
+            const query = document.getElementById('query').value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/management-query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data, query);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message || error.toString() || 'An unexpected error occurred');
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function displayResults(data, query) {
+            // Always hide error first and clear previous results
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            // Don't clear dataDisplay - it contains our DOM structure
+            // document.getElementById('dataDisplay').innerHTML = '';
+            
+            // Instead, just clear the content inside visualData and rawJson
+            const visualData = document.getElementById('visualData');
+            const rawJson = document.getElementById('rawJson');
+            if (visualData) visualData.innerHTML = '';
+            if (rawJson) rawJson.textContent = '';
+            
+            document.getElementById('insightsSection').classList.add('hidden');
+
+            // Update query summary
+            document.getElementById('querySummary').textContent = `Query: "${query}"`;
+
+            // Always show results section first so DOM elements are available
+            document.getElementById('results').classList.remove('hidden');
+
+            if (data.success && data.data && !data.data.error) {
+                // Small delay to ensure DOM elements are rendered
+                setTimeout(() => {
+                    displayData(data.data, query);
+                    
+                    // Show insights if available
+                    if (data.data.insights || data.data.recommendations) {
+                        displayInsights(data.data);
+                    }
+                }, 50);
+            } else {
+                // Handle error cases - prioritize data.data.error over data.error
+                let errorMessage = 'No data returned';
+                const errorSource = data.data?.error || data.error;
+                
+                if (errorSource) {
+                    if (typeof errorSource === 'string') {
+                        errorMessage = errorSource;
+                    } else if (errorSource.message) {
+                        errorMessage = errorSource.message;
+                    } else if (errorSource.error && typeof errorSource.error === 'string') {
+                        errorMessage = errorSource.error;
+                    } else {
+                        errorMessage = JSON.stringify(errorSource, null, 2);
+                    }
+                }
+                
+                // Show error and update query display
+                showError(errorMessage);
+            }
+        }
+
+        function displayData(data, originalQuery = '') {
+            // Ensure sections are visible
+            const visualContent = document.getElementById('visualContent');
+            const jsonContent = document.getElementById('jsonContent');
+            
+            if (visualContent) visualContent.style.display = 'block';
+            if (jsonContent) jsonContent.style.display = 'block';
+            
+            // Show the enhanced data display
+            const visualData = document.getElementById('visualData');
+            const rawJson = document.getElementById('rawJson');
+            
+            // Safety check for DOM elements
+            if (!visualData || !rawJson) {
+                console.error('Missing DOM elements for data display');
+                return;
+            }
+            
+            // Display raw JSON
+            rawJson.textContent = JSON.stringify(data, null, 2);
+            
+            // Parse chart type and granularity from original query
+            const queryLower = originalQuery.toLowerCase();
+            let chartType = data._chart_type || 'default';
+            let granularity = data._granularity || 'MONTHLY';
+            
+            // Override with query-based detection
+            if (queryLower.includes('sparkline') || queryLower.includes('spark line')) {
+                chartType = 'sparkline';
+            } else if (queryLower.includes('timeline') || queryLower.includes('time series')) {
+                chartType = 'timeline';
+            } else if (queryLower.includes('bar chart') || queryLower.includes('bar graph')) {
+                chartType = 'bar';
+            } else if (queryLower.includes('line chart') || queryLower.includes('line graph')) {
+                chartType = 'timeline'; // Use timeline for line charts
+            }
+            
+            // Parse granularity from query
+            if (queryLower.includes('daily') || queryLower.includes('day')) {
+                granularity = 'DAILY';
+            } else if (queryLower.includes('monthly') || queryLower.includes('month')) {
+                granularity = 'MONTHLY';
+            }
+            
+            console.log(`Detected chart type: ${chartType}, granularity: ${granularity}`);
+            
+            // Handle different data types
+            if (data.type) {
+                // Meta/informational responses
+                createInfoDisplay(data, visualData);
+            } else if (data.comparisons) {
+                createComparisonVisuals(data, visualData);
+            } else if (data.GroupedCosts || data.grouped_costs) {
+                // Check for special chart types
+                if (chartType === 'sparkline') {
+                    createSparklineVisuals(data, visualData, granularity);
+                } else if (chartType === 'timeline' || chartType === 'line') {
+                    createTimelineVisuals(data, visualData, granularity);
+                } else if (chartType === 'bar') {
+                    createBarChartVisuals(data, visualData, granularity);
+                } else {
+                    createCostVisuals(data, visualData);
+                }
+            } else if (Array.isArray(data)) {
+                createDataTable(data, visualData);
+            } else if (typeof data === 'object') {
+                createDataCards(data, visualData);
+            } else {
+                visualData.innerHTML = `<div class="bg-gray-50 p-4 rounded-lg"><pre class="whitespace-pre-wrap">${JSON.stringify(data, null, 2)}</pre></div>`;
+            }
+            
+            // Initialize toggle functionality
+            initializeToggles();
+        }
+        
+        function createComparisonVisuals(data, container) {
+            container.innerHTML = '';
+            
+            // Summary card
+            const summaryCard = document.createElement('div');
+            summaryCard.className = 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4';
+            summaryCard.innerHTML = `
+                <h4 class="font-semibold text-blue-900 mb-2">Comparison Summary</h4>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-blue-700">Baseline:</span>
+                        <span class="font-medium">${data.baseline_period}</span>
+                    </div>
+                    <div>
+                        <span class="text-blue-700">Comparison:</span>
+                        <span class="font-medium">${data.comparison_period}</span>
+                    </div>
+                </div>
+                <div class="mt-3 p-3 bg-white rounded border">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700">Total Change:</span>
+                        <div class="text-right">
+                            <div class="font-semibold ${data.total_comparison.percentage_change > 0 ? 'text-red-600' : 'text-green-600'}">
+                                ${data.total_comparison.percentage_change > 0 ? '+' : ''}${data.total_comparison.percentage_change.toFixed(2)}%
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                ${data.total_comparison.absolute_change > 0 ? '+' : ''}$${data.total_comparison.absolute_change.toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(summaryCard);
+            
+            // Add a visual chart for top changes
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'bg-white rounded-lg border p-4 mb-4';
+            chartContainer.innerHTML = `
+                <h4 class="font-semibold text-gray-900 mb-4">Top Cost Changes</h4>
+                <div class="h-64">
+                    <canvas id="changesChart"></canvas>
+                </div>
+            `;
+            container.appendChild(chartContainer);
+            
+            // Create chart
+            const services = Object.entries(data.comparisons)
+                .map(([service, data]) => ({ service, ...data }))
+                .filter(item => Math.abs(item.absolute_change) > 1)
+                .sort((a, b) => Math.abs(b.absolute_change) - Math.abs(a.absolute_change))
+                .slice(0, 10);
+            
+            const chartElement = document.getElementById('changesChart');
+            if (!chartElement) {
+                console.error('Changes chart element not found');
+                return;
+            }
+            const ctx = chartElement.getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: services.map(s => s.service.split(' ').slice(0, 3).join(' ')), // Shortened labels
+                    datasets: [{
+                        label: 'Cost Change ($)',
+                        data: services.map(s => s.absolute_change),
+                        backgroundColor: services.map(s => 
+                            s.absolute_change > 0 ? 'rgba(239, 68, 68, 0.7)' : 'rgba(34, 197, 94, 0.7)'
+                        ),
+                        borderColor: services.map(s => 
+                            s.absolute_change > 0 ? 'rgb(239, 68, 68)' : 'rgb(34, 197, 94)'
+                        ),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const change = context.parsed.y;
+                                    const service = services[context.dataIndex];
+                                    return [
+                                        `Change: $${change.toLocaleString()}`,
+                                        `Percentage: ${service.percentage_change.toFixed(1)}%`,
+                                        `Baseline: $${service.baseline_value.toLocaleString()}`,
+                                        `Current: $${service.comparison_value.toLocaleString()}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Top changes table
+            const changesTable = document.createElement('div');
+            changesTable.className = 'bg-white rounded-lg border overflow-hidden';
+            
+            // Use same services data for table (top 15 instead of 10)
+            const tableServices = Object.entries(data.comparisons)
+                .map(([service, data]) => ({ service, ...data }))
+                .filter(item => Math.abs(item.absolute_change) > 1) // Filter out tiny changes
+                .sort((a, b) => Math.abs(b.absolute_change) - Math.abs(a.absolute_change))
+                .slice(0, 15); // Top 15 changes
+            
+            changesTable.innerHTML = `
+                <div class="px-4 py-3 bg-gray-50 border-b">
+                    <h4 class="font-semibold text-gray-900">Top Cost Changes</h4>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Baseline</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Comparison</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Change</th>
+                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">%</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            ${tableServices.map(item => `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-900">${item.service}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600 text-right">$${item.baseline_value.toLocaleString()}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600 text-right">$${item.comparison_value.toLocaleString()}</td>
+                                    <td class="px-4 py-3 text-sm text-right ${item.absolute_change > 0 ? 'text-red-600' : 'text-green-600'}">
+                                        ${item.absolute_change > 0 ? '+' : ''}$${item.absolute_change.toLocaleString()}
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-right ${item.percentage_change > 0 ? 'text-red-600' : 'text-green-600'}">
+                                        ${item.percentage_change > 0 ? '+' : ''}${item.percentage_change.toFixed(1)}%
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.appendChild(changesTable);
+        }
+        
+        function createCostVisuals(data, container) {
+            container.innerHTML = '';
+            
+            const costData = data.GroupedCosts || data.grouped_costs;
+            if (!costData) return;
+            
+            // Summary card
+            const summaryCard = document.createElement('div');
+            summaryCard.className = 'bg-green-50 border border-green-200 rounded-lg p-4 mb-4';
+            
+            // Calculate totals
+            const periods = Object.keys(costData).filter(key => key !== 'Service Total');
+            const serviceTotals = costData['Service Total'] || {};
+            const totalCost = Object.values(serviceTotals).reduce((sum, value) => {
+                return sum + (typeof value === 'number' ? value : 0);
+            }, 0);
+            
+            summaryCard.innerHTML = `
+                <h4 class="font-semibold text-green-900 mb-2">Cost Summary</h4>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-green-700">Time Periods:</span>
+                        <span class="font-medium">${periods.length}</span>
+                    </div>
+                    <div>
+                        <span class="text-green-700">Total Cost:</span>
+                        <span class="font-medium">$${totalCost.toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(summaryCard);
+            
+            // Add pie chart for cost distribution
+            const chartContainer = document.createElement('div');
+            chartContainer.className = 'bg-white rounded-lg border p-4 mb-4';
+            const chartId = 'costChart_' + Date.now();
+            chartContainer.innerHTML = `
+                <h4 class="font-semibold text-gray-900 mb-4">Cost Distribution</h4>
+                <div class="h-64">
+                    <canvas id="${chartId}"></canvas>
+                </div>
+            `;
+            container.appendChild(chartContainer);
+            
+            // Create pie chart
+            if (serviceTotals) {
+                const topServices = Object.entries(serviceTotals)
+                    .filter(([service, cost]) => typeof cost === 'number' && cost > 100)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 8); // Top 8 for cleaner pie chart
+                
+                const others = Object.values(serviceTotals)
+                    .filter(cost => typeof cost === 'number')
+                    .reduce((sum, cost) => sum + cost, 0) - 
+                    topServices.reduce((sum, [,cost]) => sum + cost, 0);
+                
+                if (others > 0) {
+                    topServices.push(['Others', others]);
+                }
+                
+                // Use setTimeout to ensure DOM is ready
+                setTimeout(() => {
+                    const chartElement = document.getElementById(chartId);
+                    if (!chartElement) {
+                        console.error('Cost chart element not found:', chartId);
+                        return;
+                    }
+                    const ctx = chartElement.getContext('2d');
+                    
+                    new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: topServices.map(([service]) => service.split(' ').slice(0, 2).join(' ')),
+                        datasets: [{
+                            data: topServices.map(([, cost]) => cost),
+                            backgroundColor: [
+                                '#3B82F6', '#EF4444', '#10B981', '#F59E0B',
+                                '#8B5CF6', '#06B6D4', '#84CC16', '#F97316',
+                                '#6B7280'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `$${value.toLocaleString()} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                }, 100); // 100ms delay
+            }
+            
+            // Top services by cost
+            if (serviceTotals) {
+                const topServices = Object.entries(serviceTotals)
+                    .filter(([service, cost]) => typeof cost === 'number' && cost > 100)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 15);
+                
+                const servicesTable = document.createElement('div');
+                servicesTable.className = 'bg-white rounded-lg border overflow-hidden';
+                servicesTable.innerHTML = `
+                    <div class="px-4 py-3 bg-gray-50 border-b">
+                        <h4 class="font-semibold text-gray-900">Top Services by Cost</h4>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total Cost</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">% of Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${topServices.map(([service, cost]) => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900">${service}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600 text-right">$${cost.toLocaleString()}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600 text-right">${((cost/totalCost)*100).toFixed(1)}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.appendChild(servicesTable);
+            }
+        }
+        
+        function initializeToggles() {
+            // Visual toggle
+            const visualToggle = document.getElementById('visualToggle');
+            const visualContent = document.getElementById('visualContent');
+            const visualChevron = document.getElementById('visualChevron');
+            
+            // JSON toggle  
+            const jsonToggle = document.getElementById('jsonToggle');
+            const jsonContent = document.getElementById('jsonContent');
+            const jsonChevron = document.getElementById('jsonChevron');
+            
+            // Safety check - if elements don't exist, don't initialize
+            if (!visualToggle || !visualContent || !visualChevron || !jsonToggle || !jsonContent || !jsonChevron) {
+                console.warn('Toggle elements not found, skipping toggle initialization');
+                return;
+            }
+            
+            // Start with visual expanded, JSON collapsed
+            visualContent.style.display = 'block';
+            jsonContent.style.display = 'none';
+            jsonChevron.style.transform = 'rotate(-90deg)';
+            
+            visualToggle.addEventListener('click', () => {
+                if (visualContent.style.display === 'none') {
+                    visualContent.style.display = 'block';
+                    visualChevron.style.transform = 'rotate(0deg)';
+                } else {
+                    visualContent.style.display = 'none';
+                    visualChevron.style.transform = 'rotate(-90deg)';
+                }
+            });
+            
+            jsonToggle.addEventListener('click', () => {
+                if (jsonContent.style.display === 'none') {
+                    jsonContent.style.display = 'block';
+                    jsonChevron.style.transform = 'rotate(0deg)';
+                } else {
+                    jsonContent.style.display = 'none';
+                    jsonChevron.style.transform = 'rotate(-90deg)';
+                }
+            });
+        }
+
+        function createDataTable(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-8">No data available</div>';
+                return;
+            }
+
+            const table = document.createElement('div');
+            table.className = 'bg-white rounded-lg shadow-sm border overflow-hidden';
+            
+            const tableHTML = `
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                ${Object.keys(data[0]).map(key => 
+                                    `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${key}</th>`
+                                ).join('')}
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${data.map(item => `
+                                <tr>
+                                    ${Object.values(item).map(value => 
+                                        `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatValue(value)}</td>`
+                                    ).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            table.innerHTML = tableHTML;
+            container.appendChild(table);
+        }
+
+        function createDataCards(data, container) {
+            Object.entries(data).forEach(([key, value]) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-lg shadow-sm border p-6 mb-4';
+                
+                let content = '';
+                if (Array.isArray(value)) {
+                    content = `<h4 class="font-semibold text-gray-900 mb-2">${key} (${value.length} items)</h4>`;
+                    if (value.length > 0) {
+                        content += `<pre class="text-sm text-gray-600 whitespace-pre-wrap">${JSON.stringify(value, null, 2)}</pre>`;
+                    }
+                } else if (typeof value === 'object') {
+                    content = `<h4 class="font-semibold text-gray-900 mb-2">${key}</h4>`;
+                    content += `<pre class="text-sm text-gray-600 whitespace-pre-wrap">${JSON.stringify(value, null, 2)}</pre>`;
+                } else {
+                    content = `<h4 class="font-semibold text-gray-900 mb-2">${key}</h4>`;
+                    content += `<p class="text-gray-600">${formatValue(value)}</p>`;
+                }
+                
+                card.innerHTML = content;
+                container.appendChild(card);
+            });
+        }
+
+        function displayInsights(data) {
+            const insightsSection = document.getElementById('insightsSection');
+            const insightsList = document.getElementById('insights');
+            
+            insightsList.innerHTML = '';
+            
+            const insights = data.insights || data.recommendations || [];
+            if (Array.isArray(insights)) {
+                insights.forEach(insight => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start';
+                    li.innerHTML = `
+                        <i class="fas fa-arrow-right text-blue-500 mr-2 mt-1"></i>
+                        <span class="text-sm text-gray-700">${insight}</span>
+                    `;
+                    insightsList.appendChild(li);
+                });
+            }
+            
+            insightsSection.classList.remove('hidden');
+        }
+
+        function formatValue(value) {
+            if (typeof value === 'number') {
+                if (value > 1000) {
+                    return value.toLocaleString();
+                }
+                return value.toString();
+            }
+            if (typeof value === 'object') {
+                return JSON.stringify(value, null, 2);
+            }
+            return String(value);
+        }
+
+        function showError(message) {
+            // Ensure message is a string
+            let errorText = message;
+            if (typeof message === 'object' && message !== null) {
+                if (message.message) {
+                    errorText = message.message;
+                } else {
+                    errorText = JSON.stringify(message, null, 2);
+                }
+            } else if (typeof message !== 'string') {
+                errorText = String(message) || 'Unknown error occurred';
+            }
+            
+            document.getElementById('errorMessage').textContent = errorText;
+            document.getElementById('error').classList.remove('hidden');
+        }
+
+        // Submit button event listener
+        document.getElementById('submitQuery').addEventListener('click', submitQuery);
+
+        // Enter key support for textarea
+        document.getElementById('query').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                submitQuery();
+            }
+        });
+
+        function createSparklineVisuals(data, container, granularity) {
+            container.innerHTML = '';
+            
+            const costData = data.GroupedCosts || data.grouped_costs;
+            if (!costData) return;
+            
+            // Create header
+            const headerCard = document.createElement('div');
+            headerCard.className = 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6';
+            headerCard.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-blue-900">AWS Cost Sparklines</h3>
+                        <p class="text-sm text-blue-700">Compact trend visualization for ${granularity.toLowerCase()} data</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(headerCard);
+            
+            // Process time series data
+            const timeSeriesData = {};
+            const timePoints = new Set();
+            
+            Object.entries(costData).forEach(([service, periods]) => {
+                timeSeriesData[service] = {};
+                Object.entries(periods).forEach(([date, amount]) => {
+                    if (typeof amount === 'number' && amount > 0) {
+                        timeSeriesData[service][date] = amount;
+                        timePoints.add(date);
+                    }
+                });
+            });
+            
+            const sortedTimePoints = Array.from(timePoints).sort();
+            
+            // Create sparklines for top services
+            const serviceSparklines = Object.entries(timeSeriesData)
+                .map(([service, data]) => {
+                    const total = Object.values(data).reduce((a, b) => a + b, 0);
+                    return { service, data, total };
+                })
+                .filter(item => item.total > 50) // Only services with significant cost
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 8);
+            
+            serviceSparklines.forEach((item, index) => {
+                const sparklineCard = document.createElement('div');
+                sparklineCard.className = 'bg-white rounded-lg border p-4 mb-3 hover:shadow-md transition-shadow';
+                
+                const sparklineId = `sparkline_${Date.now()}_${index}`;
+                sparklineCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-medium text-gray-900">${item.service}</h4>
+                        <div class="text-right">
+                            <div class="font-semibold text-lg text-green-600">$${item.total.toLocaleString()}</div>
+                            <div class="text-xs text-gray-500">Total Cost</div>
+                        </div>
+                    </div>
+                    <div class="h-16">
+                        <canvas id="${sparklineId}" width="400" height="64"></canvas>
+                    </div>
+                `;
+                container.appendChild(sparklineCard);
+                
+                // Create sparkline chart
+                setTimeout(() => {
+                    const canvas = document.getElementById(sparklineId);
+                    if (!canvas) return;
+                    
+                    const ctx = canvas.getContext('2d');
+                    const values = sortedTimePoints.map(date => item.data[date] || 0);
+                    
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: sortedTimePoints,
+                            datasets: [{
+                                data: values,
+                                borderColor: '#3B82F6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: (context) => sortedTimePoints[context[0].dataIndex],
+                                        label: (context) => `$${context.parsed.y.toLocaleString()}`
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: { display: false },
+                                y: { display: false }
+                            },
+                            elements: {
+                                point: { hoverRadius: 6 }
+                            }
+                        }
+                    });
+                }, 100);
+            });
+        }
+        
+        function createTimelineVisuals(data, container, granularity) {
+            container.innerHTML = '';
+            
+            const costData = data.GroupedCosts || data.grouped_costs;
+            if (!costData) return;
+            
+            // Create header
+            const headerCard = document.createElement('div');
+            headerCard.className = 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6';
+            headerCard.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-clock text-purple-600 mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-purple-900">Cost Timeline</h3>
+                        <p class="text-sm text-purple-700">Time series view of AWS costs by service</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(headerCard);
+            
+            // Process and create timeline chart
+            const timelineCard = document.createElement('div');
+            timelineCard.className = 'bg-white rounded-lg border p-6';
+            
+            const timelineId = `timeline_${Date.now()}`;
+            timelineCard.innerHTML = `
+                <div class="h-80">
+                    <canvas id="${timelineId}"></canvas>
+                </div>
+            `;
+            container.appendChild(timelineCard);
+            
+            // Process time series data
+            const timeSeriesData = {};
+            const timePoints = new Set();
+            
+            Object.entries(costData).forEach(([service, periods]) => {
+                timeSeriesData[service] = {};
+                Object.entries(periods).forEach(([date, amount]) => {
+                    if (typeof amount === 'number' && amount > 0) {
+                        timeSeriesData[service][date] = amount;
+                        timePoints.add(date);
+                    }
+                });
+            });
+            
+            const sortedTimePoints = Array.from(timePoints).sort();
+            
+            // Get top services for the timeline
+            const topServices = Object.entries(timeSeriesData)
+                .map(([service, data]) => {
+                    const total = Object.values(data).reduce((a, b) => a + b, 0);
+                    return { service, data, total };
+                })
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 6);
+            
+            const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#06B6D4'];
+            
+            setTimeout(() => {
+                const canvas = document.getElementById(timelineId);
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                
+                const datasets = topServices.map((item, index) => ({
+                    label: item.service,
+                    data: sortedTimePoints.map(date => item.data[date] || 0),
+                    borderColor: colors[index % colors.length],
+                    backgroundColor: colors[index % colors.length] + '20',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: false,
+                    tension: 0.4
+                }));
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: sortedTimePoints,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { usePointStyle: true }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: (context) => `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: granularity === 'DAILY' ? 'Date' : 'Month'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Cost (USD)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                });
+            }, 100);
+        }
+        
+        function createBarChartVisuals(data, container, granularity) {
+            container.innerHTML = '';
+            
+            const costData = data.GroupedCosts || data.grouped_costs;
+            if (!costData) return;
+            
+            // Create header
+            const headerCard = document.createElement('div');
+            headerCard.className = 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6';
+            headerCard.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-chart-bar text-orange-600 mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-orange-900">Cost Bar Chart</h3>
+                        <p class="text-sm text-orange-700">Service costs breakdown over time</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(headerCard);
+            
+            // Process and create bar chart
+            const barChartCard = document.createElement('div');
+            barChartCard.className = 'bg-white rounded-lg border p-6';
+            
+            const barChartId = `barchart_${Date.now()}`;
+            barChartCard.innerHTML = `
+                <div class="h-80">
+                    <canvas id="${barChartId}"></canvas>
+                </div>
+            `;
+            container.appendChild(barChartCard);
+            
+            // Calculate total costs per service
+            const serviceTotals = {};
+            Object.entries(costData).forEach(([service, periods]) => {
+                serviceTotals[service] = Object.values(periods).reduce((sum, amount) => {
+                    return sum + (typeof amount === 'number' ? amount : 0);
+                }, 0);
+            });
+            
+            // Get top services
+            const topServices = Object.entries(serviceTotals)
+                .filter(([service, cost]) => cost > 10)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 10);
+            
+            setTimeout(() => {
+                const canvas = document.getElementById(barChartId);
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: topServices.map(([service]) => service.split(' ').slice(0, 2).join(' ')),
+                        datasets: [{
+                            label: 'Total Cost',
+                            data: topServices.map(([, cost]) => cost),
+                            backgroundColor: [
+                                '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
+                                '#06B6D4', '#84CC16', '#F97316', '#6B7280', '#EC4899'
+                            ],
+                            borderColor: [
+                                '#2563EB', '#DC2626', '#059669', '#D97706', '#7C3AED',
+                                '#0891B2', '#65A30D', '#EA580C', '#4B5563', '#DB2777'
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `$${context.parsed.y.toLocaleString()}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'AWS Services'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Total Cost (USD)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }, 100);
+        }
+        
+        function createInfoDisplay(data, container) {
+            container.innerHTML = '';
+            
+            const infoType = data.type;
+            
+            if (infoType === 'account_info') {
+                // AWS Account Information
+                const accountCard = document.createElement('div');
+                accountCard.className = 'bg-blue-50 border border-blue-200 rounded-lg p-6 mb-4';
+                accountCard.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-aws text-orange-500 text-3xl mr-4 mt-1"></i>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-blue-900 text-lg mb-3">AWS Account Information</h3>
+                            <div class="space-y-2 text-blue-800">
+                                ${data.account_id ? `<p><span class="font-medium">Account ID:</span> ${data.account_id}</p>` : ''}
+                                ${data.region ? `<p><span class="font-medium">Region:</span> ${data.region}</p>` : ''}
+                                ${data.user_arn ? `<p><span class="font-medium">User ARN:</span> <code class="bg-blue-100 px-2 py-1 rounded text-sm">${data.user_arn}</code></p>` : ''}
+                            </div>
+                            <div class="mt-4 p-3 bg-blue-100 rounded-lg">
+                                <p class="text-blue-900 font-medium">${data.message}</p>
+                                ${data.note ? `<p class="text-blue-700 text-sm mt-2">${data.note}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(accountCard);
+                
+            } else if (infoType === 'region_info') {
+                // AWS Region Information
+                const regionCard = document.createElement('div');
+                regionCard.className = 'bg-green-50 border border-green-200 rounded-lg p-6 mb-4';
+                regionCard.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-globe text-green-600 text-3xl mr-4 mt-1"></i>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-green-900 text-lg mb-3">AWS Region Information</h3>
+                            <div class="mt-4 p-3 bg-green-100 rounded-lg">
+                                <p class="text-green-900 font-medium">${data.message}</p>
+                                ${data.note ? `<p class="text-green-700 text-sm mt-2">${data.note}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(regionCard);
+                
+            } else if (infoType === 'capabilities') {
+                // Capabilities and Help
+                const capabilitiesCard = document.createElement('div');
+                capabilitiesCard.className = 'bg-purple-50 border border-purple-200 rounded-lg p-6 mb-4';
+                
+                const featuresHTML = data.features?.map(feature => 
+                    `<li class="flex items-start mb-2">
+                        <span class="text-purple-500 mr-2">•</span>
+                        <span class="text-purple-800">${feature}</span>
+                    </li>`
+                ).join('') || '';
+                
+                const examplesHTML = data.example_queries?.map(query => 
+                    `<li class="bg-purple-100 p-2 rounded mb-2 text-purple-800">
+                        <code>"${query}"</code>
+                    </li>`
+                ).join('') || '';
+                
+                capabilitiesCard.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-magic text-purple-600 text-3xl mr-4 mt-1"></i>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-purple-900 text-lg mb-3">${data.message}</h3>
+                            
+                            <div class="mb-6">
+                                <h4 class="font-medium text-purple-900 mb-3">🚀 Features:</h4>
+                                <ul class="space-y-1">
+                                    ${featuresHTML}
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <h4 class="font-medium text-purple-900 mb-3">💡 Example Queries:</h4>
+                                <ul class="space-y-2">
+                                    ${examplesHTML}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(capabilitiesCard);
+                
+            } else {
+                // General Information
+                const generalCard = document.createElement('div');
+                generalCard.className = 'bg-gray-50 border border-gray-200 rounded-lg p-6 mb-4';
+                generalCard.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-gray-600 text-3xl mr-4 mt-1"></i>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900 text-lg mb-3">${data.message || 'Information'}</h3>
+                            ${data.description ? `<p class="text-gray-700 mb-3">${data.description}</p>` : ''}
+                            ${data.note ? `<div class="bg-gray-100 p-3 rounded-lg"><p class="text-gray-800">${data.note}</p></div>` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(generalCard);
+            }
+        }
+    </script>
+</body>
+</html>
