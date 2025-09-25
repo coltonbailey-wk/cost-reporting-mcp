@@ -2,12 +2,12 @@
 
 A powerful web application that integrates with the **official AWS Cost Explorer MCP server** from [AWS Labs](https://github.com/awslabs/mcp/tree/main/src/cost-explorer-mcp-server) to provide comprehensive AWS cost analysis and management insights.
 
-### **✅ Official AWS Support**
+### **Official AWS Support**
 - **Maintained by AWS Labs**: Official AWS support and updates
 - **Standard MCP Protocol**: Full MCP specification compliance
 - **Cost Explorer Integration**: Direct integration with AWS Cost Explorer API
 
-### **✅ Official MCP Tools Available**
+### **Official MCP Tools Available**
 
 The official AWS Cost Explorer MCP server provides these tools:
 
@@ -19,7 +19,7 @@ The official AWS Cost Explorer MCP server provides these tools:
 6. **get_cost_comparison_drivers** - Analyze cost change drivers (top 10 most significant)
 7. **get_cost_forecast** - Generate cost forecasts with confidence intervals
 
-## 🚀 **Quick Start**
+## **Quick Start**
 
 ### **Option 1: Easy Start**
 ```bash
@@ -37,7 +37,7 @@ python3 web_app.py
 ### **Access the Dashboard**
 Open your browser and go to: **http://localhost:8002**
 
-### **🎯 Quick Test Queries**
+### **Quick Test Queries**
 Try these queries immediately to see the enhanced features:
 
 1. **Account Info**: `"Which AWS account is this getting data from?"`
@@ -46,26 +46,26 @@ Try these queries immediately to see the enhanced features:
 4. **Timeline**: `"Show me a timeline of costs for the last 6 months"`
 5. **Bar Chart**: `"Create a bar chart of my AWS service costs"`
 
-## 💬 **Smart Natural Language Understanding**
+## **Smart Natural Language Understanding**
 
 This dashboard features **basic query classification** that distinguishes between different types of questions and provides appropriate responses.
 This is a work in progress, so it will not be able to answer all NLP queries.
 
-### **📋 Account & System Information**
+### ** Account & System Information**
 Get information about your AWS setup and dashboard capabilities:
 - `"Which AWS account is this getting data from?"`
 - `"What AWS account am I connected to?"`
 - `"What region is this data from?"`
 - `"Where is this data coming from?"`
 
-### **❓ Help & Capabilities**
+### ** Help & Capabilities**
 Learn what the dashboard can do:
 - `"Help"`
 - `"What can you do?"`
 - `"What are your capabilities?"`
 - `"What tools do you have?"`
 
-### **💰 Cost Analysis Queries**
+### **Cost Analysis Queries**
 
 #### **Basic Cost Analysis**
 - `"Show me my AWS costs for the last 3 months grouped by service"`
@@ -82,35 +82,35 @@ Learn what the dashboard can do:
 - `"Predict my EC2 spending for the next quarter"`
 - `"What will my total AWS bill be for the rest of 2025?"`
 
-## 📊 **Enhanced Visualizations**
+## **Enhanced Visualizations**
 
 The dashboard supports **multiple chart types** with detection based on your query:
 
-### **🔹 Sparkline Charts**
+### ** Sparkline Charts**
 Compact trend visualizations showing costs over time:
 - `"Can you give me a sparkline graph of monthly AWS charges for each service this year?"`
 - `"Show me sparklines for my top AWS services"`
 - `"Create sparkline trends for my costs"`
 
-### **📈 Timeline Charts**
+### **Timeline Charts**
 Multi-line time series charts for detailed trend analysis:
 - `"Show me a timeline of AWS costs for the last 6 months"`
 - `"Create a timeline chart of my EC2 costs"`
 - `"Give me a line graph of daily AWS charges for the last 30 days"`
 
-### **📊 Bar Charts**
+### **Bar Charts**
 Service comparison with colorful bar visualizations:
 - `"Create a bar chart of my AWS service costs"`
 - `"Show me a bar graph of my top spending categories"`
 - `"Give me bar charts for my monthly expenses"`
 
-### **🥧 Pie Charts & Tables**
+### ** Pie Charts & Tables**
 Default comprehensive cost breakdowns (automatically chosen):
 - `"Show me my AWS costs for the last 3 months"`
 - `"What are my current AWS expenses?"`
 - `"Break down my costs by service"`
 
-## 🎨 **Smart Date & Time Parsing**
+## **Smart Date & Time Parsing**
 
 The system parses time periods from your queries:
 
@@ -128,7 +128,7 @@ The system parses time periods from your queries:
 - `"Show me a timeline of daily costs for the last 30 days"`
   → **Timeline + 30 days + Daily data**
 
-## 🔧 **Official MCP Features**
+## **Official MCP Features**
 
 ### **Cost Analysis**
 - **Detailed breakdowns** by service, region, and other dimensions
@@ -165,7 +165,7 @@ The system parses time periods from your queries:
 - **Responsive design** that works on all devices
 - **Color-coded information cards** for different query types
 
-## 🏗️ **Architecture**
+## **Architecture**
 
 ```
 Web Browser → FastAPI App → Official AWS MCP Server → AWS Cost Explorer API
@@ -175,7 +175,7 @@ Web Browser → FastAPI App → Official AWS MCP Server → AWS Cost Explorer AP
             Official AWS Analysis & Insights
 ```
 
-## 📁 **Files Structure**
+## **Files Structure**
 
 ```
 cost-explorer-official-mcp/
@@ -187,7 +187,7 @@ cost-explorer-official-mcp/
 └── README.md                    # This documentation
 ```
 
-## 🔒 **Security & Permissions**
+## **Security & Permissions**
 
 ### **Required IAM Permissions**
 The official MCP server requires these IAM permissions:
@@ -207,7 +207,7 @@ The MCP server uses the AWS profile specified in the `AWS_PROFILE` environment v
 }
 ```
 
-## 💰 **Cost Considerations**
+## **Cost Considerations**
 
 **Important:** AWS Cost Explorer API incurs charges on a per-request basis:
 - **Cost Explorer API Pricing:** $0.01 per request
@@ -216,23 +216,23 @@ The MCP server uses the AWS profile specified in the `AWS_PROFILE` environment v
 
 For current pricing information, refer to the [AWS Cost Explorer Pricing page](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/).
 
-## 🎯 **Key Benefits of Official MCP**
+## **Key Benefits of Official MCP**
 
 | Feature | Custom MCP | Official AWS MCP |
 |---------|------------|------------------|
-| **Maintenance** | Custom implementation | ✅ Official AWS support |
-| **Updates** | Manual updates needed | ✅ Automatic updates from AWS |
-| **Features** | Basic cost analysis | ✅ Full Cost Explorer capabilities |
-| **Cost Comparison** | Not available | ✅ NEW AWS feature |
-| **Cost Drivers** | Not available | ✅ Top 10 drivers analysis |
-| **Forecasting** | Basic | ✅ Advanced with confidence intervals |
-| **Chart Types** | Basic tables | ✅ Sparklines, timelines, bar charts, pie charts |
-| **Query Intelligence** | Simple keyword matching | ✅ Smart classification & date parsing |
-| **Account Info** | Not available | ✅ AWS account & region details |
-| **Help System** | Not available | ✅ Interactive capabilities guide |
-| **Production Ready** | Custom | ✅ Battle-tested by AWS |
+| **Maintenance** | Custom implementation | Official AWS support |
+| **Updates** | Manual updates needed | Automatic updates from AWS |
+| **Features** | Basic cost analysis | Full Cost Explorer capabilities |
+| **Cost Comparison** | Not available | NEW AWS feature |
+| **Cost Drivers** | Not available | Top 10 drivers analysis |
+| **Forecasting** | Basic | Advanced with confidence intervals |
+| **Chart Types** | Basic tables | Sparklines, timelines, bar charts, pie charts |
+| **Query Intelligence** | Simple keyword matching | Smart classification & date parsing |
+| **Account Info** | Not available | AWS account & region details |
+| **Help System** | Not available | Interactive capabilities guide |
+| **Production Ready** | Custom | Battle-tested by AWS |
 
-## 🚀 **Advanced Usage**
+## **Advanced Usage**
 
 ### **Integration with Cursor**
 You can also integrate the official MCP server directly with Cursor:
@@ -281,7 +281,7 @@ The official MCP server also supports Docker deployment:
 }
 ```
 
-## 📚 **References**
+## **References**
 
 - [Official AWS Cost Explorer MCP Server](https://github.com/awslabs/mcp/tree/main/src/cost-explorer-mcp-server)
 - [AWS Cost Explorer Pricing](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/)

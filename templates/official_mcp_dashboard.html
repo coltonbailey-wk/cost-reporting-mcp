@@ -17,10 +17,6 @@
                 <div class="flex items-center">
                     <i class="fas fa-chart-line text-blue-600 text-2xl mr-3"></i>
                     <h1 class="text-2xl font-bold text-gray-900">AWS Cost Explorer MCP - Management Dashboard</h1>
-                    <span class="ml-3 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">AWS MCP</span>
-                </div>
-                <div class="text-sm text-gray-500">
-                    Powered by AWS Labs MCP Server
                 </div>
             </div>
         </div>
@@ -57,13 +53,12 @@
                     id="submitQuery" 
                     class="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out font-medium"
                 >
-                    <i class="fas fa-brain mr-2"></i>Analyze with AWS MCP
+                    <i class="fas fa-brain mr-2"></i>Analyze with AWS Bedrock and MCP
                 </button>
             </div>
         </div>
 
-        <!-- Official MCP Tools -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <button class="quick-analysis bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition duration-150 ease-in-out text-left" data-query="Show me my AWS costs for the last 3 months grouped by service">
                 <i class="fas fa-chart-pie text-blue-600 text-2xl mb-3"></i>
                 <h3 class="font-semibold text-gray-900 mb-2">Cost Analysis</h3>
@@ -87,43 +82,13 @@
                 <h3 class="font-semibold text-gray-900 mb-2">Cost Drivers</h3>
                 <p class="text-sm text-gray-600">Identify spending drivers</p>
             </button>
-        </div>
 
-        <!-- Official MCP Tools List -->
-        <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <i class="fas fa-cogs mr-2"></i>Available AWS Cost Explorer MCP Tools
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="p-4 border border-gray-200 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">get_today_date</h4>
-                    <p class="text-sm text-gray-600">Get current date for time-based queries</p>
-                </div>
-                <div class="p-4 border border-gray-200 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">get_dimension_values</h4>
-                    <p class="text-sm text-gray-600">Get available values for dimensions (SERVICE, REGION)</p>
-                </div>
-                <div class="p-4 border border-gray-200 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">get_tag_values</h4>
-                    <p class="text-sm text-gray-600">Get available values for tag keys</p>
-                </div>
-                <div class="p-4 border border-gray-200 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">get_cost_and_usage</h4>
-                    <p class="text-sm text-gray-600">Retrieve AWS cost and usage data</p>
-                </div>
-                <div class="p-4 border border-gray-200 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">get_cost_and_usage_comparisons</h4>
-                    <p class="text-sm text-gray-600">Compare costs between time periods</p>
-                </div>
-                <div class="p-4 border border-gray-200 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">get_cost_comparison_drivers</h4>
-                    <p class="text-sm text-gray-600">Analyze cost change drivers</p>
-                </div>
-                <div class="p-4 border border-gray-200 rounded-lg">
-                    <h4 class="font-medium text-gray-900 mb-2">get_cost_forecast</h4>
-                    <p class="text-sm text-gray-600">Generate cost forecasts</p>
-                </div>
-            </div>
+            <button id="helpButton" class="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition duration-150 ease-in-out text-left" onclick="showCapabilities()">
+                <i class="fas fa-lightbulb text-yellow-600 text-2xl mb-3"></i>
+                <h3 class="font-semibold text-gray-900 mb-2">Capabilities</h3>
+                <p class="text-sm text-gray-600">See what this system can do</p>
+            </button>
+
         </div>
 
         <!-- Loading Indicator -->
@@ -161,20 +126,36 @@
                         </div>
                     </div>
                     
-                    <!-- Raw JSON Section -->
-                    <div class="bg-white rounded-lg shadow-sm border">
-                        <button id="jsonToggle" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors">
+                    <!-- AI Explanation Section -->
+                    <div id="aiExplanationSection" class="bg-blue-50 rounded-lg border border-blue-200 hidden">
+                        <button class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-blue-100 transition-colors">
                             <div class="flex items-center">
-                                <i class="fas fa-code text-green-600 mr-3"></i>
-                                <h3 class="font-semibold text-gray-900">Raw Data</h3>
+                                <i class="fas fa-robot text-blue-600 mr-3"></i>
+                                <h3 class="font-semibold text-blue-900">AI Analysis & Explanation</h3>
                             </div>
-                            <i id="jsonChevron" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                            <i class="fas fa-chevron-down text-blue-400 transition-transform"></i>
                         </button>
-                        <div id="jsonContent" class="px-6 pb-6 block">
-                            <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-auto">
-                                <pre id="rawJson" class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
+                        <div class="px-6 pb-6 block">
+                            <div id="aiExplanationContent" class="prose prose-sm max-w-none">
+                                <!-- AI explanation will be inserted here -->
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raw JSON Section -->
+            <div class="bg-white rounded-lg shadow-sm border mb-6 hidden" id="rawDataSection">
+                <button id="jsonToggle" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fas fa-code text-green-600 mr-3"></i>
+                        <h3 class="font-semibold text-gray-900">Raw Data</h3>
+                    </div>
+                    <i id="jsonChevron" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+                </button>
+                <div id="jsonContent" class="px-6 pb-6 block">
+                    <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-auto">
+                        <pre id="rawJson" class="text-sm text-gray-800 whitespace-pre-wrap"></pre>
                     </div>
                 </div>
             </div>
@@ -265,6 +246,8 @@
             if (rawJson) rawJson.textContent = '';
             
             document.getElementById('insightsSection').classList.add('hidden');
+            document.getElementById('aiExplanationSection').classList.add('hidden');
+            document.getElementById('rawDataSection').classList.add('hidden');
 
             // Update query summary
             document.getElementById('querySummary').textContent = `Query: "${query}"`;
@@ -276,6 +259,11 @@
                 // Small delay to ensure DOM elements are rendered
                 setTimeout(() => {
                     displayData(data.data, query);
+                    
+                    // Show AI explanation if available from Bedrock Claude
+                    if (data.llm_analysis && data.llm_analysis.explanation) {
+                        displayAIExplanation(data.llm_analysis.explanation);
+                    }
                     
                     // Show insights if available
                     if (data.data.insights || data.data.recommendations) {
@@ -308,9 +296,11 @@
             // Ensure sections are visible
             const visualContent = document.getElementById('visualContent');
             const jsonContent = document.getElementById('jsonContent');
+            const rawDataSection = document.getElementById('rawDataSection');
             
             if (visualContent) visualContent.style.display = 'block';
             if (jsonContent) jsonContent.style.display = 'block';
+            if (rawDataSection) rawDataSection.classList.remove('hidden');
             
             // Show the enhanced data display
             const visualData = document.getElementById('visualData');
@@ -356,6 +346,13 @@
                 createInfoDisplay(data, visualData);
             } else if (data.comparisons) {
                 createComparisonVisuals(data, visualData);
+            } else if (data.forecast_period && data.predictions) {
+                // Forecast data - check if sparkline requested
+                if (chartType === 'sparkline') {
+                    createForecastSparklineVisuals(data, visualData, granularity);
+                } else {
+                    createForecastVisuals(data, visualData, granularity);
+                }
             } else if (data.GroupedCosts || data.grouped_costs) {
                 // Check for special chart types
                 if (chartType === 'sparkline') {
@@ -815,6 +812,22 @@
             return String(value);
         }
 
+        function displayAIExplanation(explanation) {
+            const explanationSection = document.getElementById('aiExplanationSection');
+            const explanationContent = document.getElementById('aiExplanationContent');
+            
+            if (explanationSection && explanationContent && explanation) {
+                // Convert line breaks to paragraphs and format the explanation
+                const formattedExplanation = explanation
+                    .split('\n\n')
+                    .map(paragraph => `<p class="mb-3 text-blue-800 leading-relaxed">${paragraph.trim()}</p>`)
+                    .join('');
+                
+                explanationContent.innerHTML = formattedExplanation;
+                explanationSection.classList.remove('hidden');
+            }
+        }
+
         function showError(message) {
             // Ensure message is a string
             let errorText = message;
@@ -955,6 +968,221 @@
                     });
                 }, 100);
             });
+        }
+        
+        function createForecastSparklineVisuals(data, container, granularity) {
+            container.innerHTML = '';
+            
+            // Create header
+            const headerCard = document.createElement('div');
+            headerCard.className = 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6';
+            headerCard.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-chart-line text-purple-600 mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-purple-900">AWS Cost Forecast Sparkline</h3>
+                        <p class="text-sm text-purple-700">Historical trend with prediction (${data.forecast_period})</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(headerCard);
+            
+            // Extract forecast data and convert to sparkline format
+            const predictions = data.predictions || {};
+            const timePoints = Object.keys(predictions).sort();
+            const values = timePoints.map(date => predictions[date].predicted_cost || 0);
+            
+            if (timePoints.length === 0) {
+                container.innerHTML += '<div class="text-center py-4 text-gray-500">No forecast data available</div>';
+                return;
+            }
+            
+            // Create forecast sparkline card
+            const sparklineCard = document.createElement('div');
+            sparklineCard.className = 'bg-white rounded-lg border p-4 mb-3 hover:shadow-md transition-shadow';
+            
+            const sparklineId = `forecast_sparkline_${Date.now()}`;
+            const totalForecast = data.total_forecast?.predicted_cost || values.reduce((a, b) => a + b, 0);
+            
+            sparklineCard.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-medium text-gray-900">Total Forecast</h4>
+                    <div class="text-right">
+                        <div class="font-semibold text-lg text-purple-600">$${totalForecast.toLocaleString()}</div>
+                        <div class="text-xs text-gray-500">Predicted Cost</div>
+                    </div>
+                </div>
+                <div class="h-16">
+                    <canvas id="${sparklineId}" width="400" height="64"></canvas>
+                </div>
+            `;
+            container.appendChild(sparklineCard);
+            
+            // Create forecast sparkline chart
+            setTimeout(() => {
+                const canvas = document.getElementById(sparklineId);
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                
+                // Create labels for display (show month names)
+                const displayLabels = timePoints.map(date => {
+                    const d = new Date(date);
+                    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                });
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: displayLabels,
+                        datasets: [{
+                            data: values,
+                            borderColor: '#8B5CF6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#8B5CF6',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    title: (context) => displayLabels[context[0].dataIndex],
+                                    label: (context) => {
+                                        const cost = context.parsed.y.toLocaleString();
+                                        const confidence = predictions[timePoints[context.dataIndex]]?.confidence_range;
+                                        if (confidence) {
+                                            const lower = confidence.lower_bound.toLocaleString();
+                                            const upper = confidence.upper_bound.toLocaleString();
+                                            return [
+                                                `Predicted: $${cost}`,
+                                                `Range: $${lower} - $${upper}`
+                                            ];
+                                        }
+                                        return `Predicted: $${cost}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { 
+                                display: false 
+                            },
+                            y: { 
+                                display: false,
+                                beginAtZero: true
+                            }
+                        },
+                        elements: {
+                            line: {
+                                borderJoinStyle: 'round'
+                            }
+                        }
+                    }
+                });
+            }, 100);
+            
+            // Add confidence range info
+            if (data.total_forecast?.confidence_range) {
+                const confidenceCard = document.createElement('div');
+                confidenceCard.className = 'bg-purple-50 rounded-lg p-3 mt-4';
+                const range = data.total_forecast.confidence_range;
+                confidenceCard.innerHTML = `
+                    <div class="text-sm text-purple-800">
+                        <strong>Confidence Range (${data.confidence_level || '80%'}):</strong><br>
+                        Lower: $${range.lower_bound.toLocaleString()}<br>
+                        Upper: $${range.upper_bound.toLocaleString()}
+                    </div>
+                `;
+                container.appendChild(confidenceCard);
+            }
+        }
+        
+        function createForecastVisuals(data, container, granularity) {
+            container.innerHTML = '';
+            
+            // Create header
+            const headerCard = document.createElement('div');
+            headerCard.className = 'bg-green-50 border border-green-200 rounded-lg p-4 mb-6';
+            headerCard.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-crystal-ball text-green-600 mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-green-900">AWS Cost Forecast</h3>
+                        <p class="text-sm text-green-700">Predicted costs for ${data.forecast_period}</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(headerCard);
+            
+            // Create forecast summary card
+            if (data.total_forecast) {
+                const summaryCard = document.createElement('div');
+                summaryCard.className = 'bg-white rounded-lg border p-6 mb-4';
+                const forecast = data.total_forecast;
+                
+                summaryCard.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600 mb-2">
+                            $${forecast.predicted_cost.toLocaleString()}
+                        </div>
+                        <div class="text-gray-600 mb-4">Total Predicted Cost</div>
+                        ${forecast.confidence_range ? `
+                            <div class="bg-green-50 rounded-lg p-3">
+                                <div class="text-sm text-green-800">
+                                    <strong>Confidence Range (${data.confidence_level || '80%'}):</strong><br>
+                                    $${forecast.confidence_range.lower_bound.toLocaleString()} - 
+                                    $${forecast.confidence_range.upper_bound.toLocaleString()}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(summaryCard);
+            }
+            
+            // Create predictions breakdown
+            if (data.predictions) {
+                const predictionsCard = document.createElement('div');
+                predictionsCard.className = 'bg-white rounded-lg border p-4';
+                
+                let predictionsHTML = '<h4 class="font-semibold text-gray-900 mb-3">Monthly Predictions</h4><div class="space-y-2">';
+                
+                Object.entries(data.predictions).forEach(([date, prediction]) => {
+                    const d = new Date(date);
+                    const monthName = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    
+                    predictionsHTML += `
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <span class="font-medium">${monthName}</span>
+                            <div class="text-right">
+                                <div class="font-semibold">$${prediction.predicted_cost.toLocaleString()}</div>
+                                ${prediction.confidence_range ? `
+                                    <div class="text-xs text-gray-500">
+                                        $${prediction.confidence_range.lower_bound.toLocaleString()} - 
+                                        $${prediction.confidence_range.upper_bound.toLocaleString()}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                predictionsHTML += '</div>';
+                predictionsCard.innerHTML = predictionsHTML;
+                container.appendChild(predictionsCard);
+            }
         }
         
         function createTimelineVisuals(data, container, granularity) {
@@ -1261,14 +1489,14 @@
                             <h3 class="font-semibold text-purple-900 text-lg mb-3">${data.message}</h3>
                             
                             <div class="mb-6">
-                                <h4 class="font-medium text-purple-900 mb-3">🚀 Features:</h4>
+                                <h4 class="font-medium text-purple-900 mb-3">Features:</h4>
                                 <ul class="space-y-1">
                                     ${featuresHTML}
                                 </ul>
                             </div>
                             
                             <div>
-                                <h4 class="font-medium text-purple-900 mb-3">💡 Example Queries:</h4>
+                                <h4 class="font-medium text-purple-900 mb-3">Example Queries:</h4>
                                 <ul class="space-y-2">
                                     ${examplesHTML}
                                 </ul>
@@ -1295,6 +1523,217 @@
                 container.appendChild(generalCard);
             }
         }
+
+        // Capabilities modal functions
+        function showCapabilities() {
+            document.getElementById('capabilitiesModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideCapabilities() {
+            document.getElementById('capabilitiesModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside or pressing Escape
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('capabilitiesModal');
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    hideCapabilities();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    hideCapabilities();
+                }
+            });
+        });
     </script>
+
+    <!-- Capabilities Modal -->
+    <div id="capabilitiesModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+        <div class="absolute inset-4 bg-white rounded-lg shadow-xl flex flex-col" style="max-height: calc(100vh - 2rem);">
+            <div class="flex-shrink-0 bg-white border-b p-6 flex justify-between items-center rounded-t-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-lightbulb text-yellow-600 text-2xl mr-3"></i>
+                    <h2 class="text-2xl font-bold text-gray-900">AWS Cost Explorer MCP Capabilities</h2>
+                </div>
+                <button onclick="hideCapabilities()" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 min-h-0" style="scrollbar-width: thin; max-height: 100%;">
+                <!-- Core Features -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-blue-900 mb-4 flex items-center">
+                        <i class="fas fa-star text-blue-600 mr-2"></i>
+                        Core Features
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-blue-800 mb-2">Cost Analysis</h4>
+                            <p class="text-sm text-blue-700">View AWS costs grouped by service, region, account, or time period with interactive charts and tables</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-purple-800 mb-2">Cost Forecasting</h4>
+                            <p class="text-sm text-purple-700">Predict future AWS spending with machine learning-powered forecasts and confidence intervals</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-green-800 mb-2">Cost Comparisons</h4>
+                            <p class="text-sm text-green-700">Compare costs between different time periods to identify trends and changes</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-red-800 mb-2">Cost Drivers</h4>
+                            <p class="text-sm text-red-700">Identify what's driving cost changes and discover spending patterns</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Types -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-purple-900 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-purple-600 mr-2"></i>
+                        Visualization Types
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                            <i class="fas fa-chart-line text-blue-600 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">Sparklines</div>
+                            <div class="text-xs text-gray-600">Compact trends</div>
+                        </div>
+                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                            <i class="fas fa-chart-area text-green-600 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">Timeline Charts</div>
+                            <div class="text-xs text-gray-600">Time series data</div>
+                        </div>
+                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                            <i class="fas fa-chart-bar text-yellow-600 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">Bar Charts</div>
+                            <div class="text-xs text-gray-600">Service comparisons</div>
+                        </div>
+                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                            <i class="fas fa-chart-pie text-red-600 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">Data Tables</div>
+                            <div class="text-xs text-gray-600">Detailed breakdowns</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query Examples -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-green-900 mb-4 flex items-center">
+                        <i class="fas fa-comments text-green-600 mr-2"></i>
+                        Natural Language Queries
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Cost Analysis Examples:</h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• "Show me my AWS costs for the last 30 days"</li>
+                                <li>• "What did I spend on EC2 in Q3?"</li>
+                                <li>• "Break down costs by service for July"</li>
+                                <li>• "Show S3 costs in us-east-1 last month"</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Forecast Examples:</h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• "Forecast my AWS costs for next month"</li>
+                                <li>• "What will I spend on Lambda in October?"</li>
+                                <li>• "Show cost predictions with sparklines"</li>
+                                <li>• "Predict quarterly spending trends"</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Comparison Examples:</h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• "Compare last month vs this month"</li>
+                                <li>• "Why did my AWS bill increase?"</li>
+                                <li>• "Show cost changes from July to August"</li>
+                                <li>• "What changed in my EC2 spending?"</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Sparkline Examples:</h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• "Show sparkline trends for all services"</li>
+                                <li>• "Display RDS costs as sparklines"</li>
+                                <li>• "Forecast with sparkline visualization"</li>
+                                <li>• "Compact view of monthly trends"</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-2">Meta Questions:</h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• "What can you do?"</li>
+                                <li>• "Show me examples of questions I can ask"</li>
+                                <li>• "Help me get started"</li>
+                                <li>• "What AWS services can you analyze?"</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-2">System Information:</h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• "What metrics do you support?"</li>
+                                <li>• "How do you calculate costs?"</li>
+                                <li>• "What visualization types are available?"</li>
+                                <li>• "Show me available AWS regions"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cost Metrics -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-orange-900 mb-4 flex items-center">
+                        <i class="fas fa-calculator text-orange-600 mr-2"></i>
+                        Supported Cost Metrics
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-red-800 mb-2">Net Amortized Cost (Default)</h4>
+                            <p class="text-sm text-red-700">Your actual costs after RI and Savings Plan discounts, with upfront costs spread over time</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-blue-800 mb-2">Unblended Cost</h4>
+                            <p class="text-sm text-blue-700">Your usage costs at On-Demand rates, before any discounts or credits</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-green-800 mb-2">Blended Cost</h4>
+                            <p class="text-sm text-green-700">Average cost across all accounts in your organization</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-purple-800 mb-2">Usage Quantity</h4>
+                            <p class="text-sm text-purple-700">Amount of resources used (hours, GB, requests, etc.)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Features -->
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-brain text-indigo-600 mr-2"></i>
+                        AI-Powered Features
+                    </h3>
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <ul class="text-sm text-indigo-800 space-y-2">
+                            <li>• <strong>Natural Language Understanding:</strong> Ask questions in plain English</li>
+                            <li>• <strong>Smart Date Parsing:</strong> "last quarter", "Q3", "past 30 days", etc.</li>
+                            <li>• <strong>Intelligent Explanations:</strong> AI analysis of your cost data and trends</li>
+                            <li>• <strong>Automatic Visualization:</strong> Best chart type selected based on your query</li>
+                            <li>• <strong>Context Awareness:</strong> Understands AWS services, regions, and cost concepts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex-shrink-0 border-t p-4 text-center text-sm text-gray-600">
+                <p>Powered by AWS Labs Official MCP Server + AWS Bedrock Claude</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
