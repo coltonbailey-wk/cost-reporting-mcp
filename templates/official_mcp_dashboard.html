@@ -24,6 +24,33 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Model Selector -->
+        <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-brain text-purple-600 text-lg mr-3"></i>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900">AI Model Selection</h3>
+                        <p class="text-xs text-gray-500">Choose between faster responses or more complex analysis</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <label for="model-selector" class="text-sm font-medium text-gray-700">Model:</label>
+                    <select 
+                        id="model-selector" 
+                        class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    >
+                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Faster)</option>
+                        <option value="claude-3-5-haiku">Claude 3.5 Haiku (Fastest)</option>
+                        <option value="claude-opus-4-1">Claude 4.1 (Most Advanced)</option>
+                    </select>
+                    <div class="text-xs text-gray-500 max-w-xs">
+                        <span id="model-description">Faster responses for shorter queries and basic analysis</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Enhanced Query Section -->
         <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">
@@ -207,13 +234,15 @@
             document.getElementById('error').classList.add('hidden');
 
             try {
+                const selectedModel = document.getElementById('model-selector').value;
                 const response = await fetch('/api/management-query', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        query: query
+                        query: query,
+                        model: selectedModel
                     })
                 });
 
@@ -547,9 +576,11 @@
             // Calculate totals
             const periods = Object.keys(costData).filter(key => key !== 'Service Total');
             const serviceTotals = costData['Service Total'] || {};
-            const totalCost = Object.values(serviceTotals).reduce((sum, value) => {
-                return sum + (typeof value === 'number' ? value : 0);
-            }, 0);
+            // Use the authoritative total from the data instead of summing individual services
+            const totalCost = serviceTotals['Total NetAmortizedCost'] || 
+                             Object.values(serviceTotals).reduce((sum, value) => {
+                                 return sum + (typeof value === 'number' ? value : 0);
+                             }, 0);
             
             summaryCard.innerHTML = `
                 <h4 class="font-semibold text-green-900 mb-2">Cost Summary</h4>
@@ -581,13 +612,24 @@
             // Create pie chart
             if (serviceTotals) {
                 const topServices = Object.entries(serviceTotals)
-                    .filter(([service, cost]) => typeof cost === 'number' && cost > 100)
+                    .filter(([service, cost]) => {
+                        // Exclude total fields and ensure it's a valid number
+                        return typeof cost === 'number' && 
+                               cost > 100 && 
+                               !service.includes('Total') && 
+                               !service.includes('NetAmortizedCost');
+                    })
                     .sort(([,a], [,b]) => b - a)
                     .slice(0, 8); // Top 8 for cleaner pie chart
                 
-                const others = Object.values(serviceTotals)
-                    .filter(cost => typeof cost === 'number')
-                    .reduce((sum, cost) => sum + cost, 0) - 
+                const others = Object.entries(serviceTotals)
+                    .filter(([service, cost]) => {
+                        // Exclude total fields and ensure it's a valid number
+                        return typeof cost === 'number' && 
+                               !service.includes('Total') && 
+                               !service.includes('NetAmortizedCost');
+                    })
+                    .reduce((sum, [,cost]) => sum + cost, 0) - 
                     topServices.reduce((sum, [,cost]) => sum + cost, 0);
                 
                 if (others > 0) {
@@ -639,7 +681,13 @@
             // Top services by cost
             if (serviceTotals) {
                 const topServices = Object.entries(serviceTotals)
-                    .filter(([service, cost]) => typeof cost === 'number' && cost > 100)
+                    .filter(([service, cost]) => {
+                        // Exclude total fields and ensure it's a valid number
+                        return typeof cost === 'number' && 
+                               cost > 100 && 
+                               !service.includes('Total') && 
+                               !service.includes('NetAmortizedCost');
+                    })
                     .sort(([,a], [,b]) => b - a)
                     .slice(0, 15);
                 
@@ -854,6 +902,24 @@
                 submitQuery();
             }
         });
+
+        // Model selector functionality
+        const modelSelector = document.getElementById('model-selector');
+        const modelDescription = document.getElementById('model-description');
+        
+        const modelDescriptions = {
+            'claude-3-5-sonnet': 'Faster responses for shorter queries and basic analysis',
+            'claude-3-5-haiku': 'Fastest responses for simple queries',
+            'claude-opus-4-1': 'Most advanced model with best reasoning capabilities'
+        };
+        
+        // Update description when model changes
+        modelSelector.addEventListener('change', (e) => {
+            modelDescription.textContent = modelDescriptions[e.target.value];
+        });
+        
+        // Initialize with default description
+        modelDescription.textContent = modelDescriptions[modelSelector.value];
 
         function createSparklineVisuals(data, container, granularity) {
             container.innerHTML = '';
@@ -1354,7 +1420,13 @@
             
             // Get top services
             const topServices = Object.entries(serviceTotals)
-                .filter(([service, cost]) => cost > 10)
+                .filter(([service, cost]) => {
+                    // Exclude total fields and ensure it's a valid number
+                    return typeof cost === 'number' && 
+                           cost > 10 && 
+                           !service.includes('Total') && 
+                           !service.includes('NetAmortizedCost');
+                })
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 10);
             

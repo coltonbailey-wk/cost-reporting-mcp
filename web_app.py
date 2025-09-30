@@ -32,6 +32,7 @@ class MCPQuery(BaseModel):
     query: str
     tool_name: Optional[str] = None
     parameters: Optional[Dict[str, Any]] = None
+    model: Optional[str] = None
 
 
 class OfficialMCPClient:
@@ -413,7 +414,7 @@ class OfficialMCPClient:
     #     # Default to cost analysis for longer queries
     #     return 'cost_analysis'
 
-    async def execute_enhanced_query(self, query: str) -> Dict[str, Any]:
+    async def execute_enhanced_query(self, query: str, model: Optional[str] = None) -> Dict[str, Any]:
         """Execute query with LLM-enhanced understanding"""
         import hashlib
         import time
@@ -448,7 +449,7 @@ class OfficialMCPClient:
         if self.llm_processor:
             try:
                 # Use LLM to understand the query
-                parsed_query = await self.llm_processor.process_query(query)
+                parsed_query = await self.llm_processor.process_query(query, model=model)
                 print(
                     f"[{query_id}] Bedrock parsed: {parsed_query.get('tool_name', 'unknown')} with metric: {parsed_query.get('parameters', {}).get('metric', 'unknown')}"
                 )
@@ -823,8 +824,8 @@ async def execute_management_query(query: MCPQuery, response: Response):
 
     try:
         result = await mcp_client.execute_enhanced_query(
-            query.query
-        )  # Use enhanced query instead
+            query.query, model=query.model
+        )  # Use enhanced query with model selection
         return {
             "success": result.get("success", True),
             "data": result.get("data", result),

@@ -14,15 +14,69 @@ class BedrockQueryProcessor:
     def __init__(self, region_name: str = "us-east-1"):
         """Initialize AWS Bedrock client"""
         self.bedrock = boto3.client("bedrock-runtime", region_name=region_name)
-        # Available Claude models in Bedrock (using model IDs)
+        # Available Claude models in Bedrock (using model IDs and inference profiles)
         self.model_ids = {
+            "claude-opus-4-1": "anthropic.claude-opus-4-1-20250805-v1:0",  # Claude 4.1 primary
             "claude-3-5-sonnet": "anthropic.claude-3-5-sonnet-20240620-v1:0",
             "claude-3-5-haiku": "anthropic.claude-3-5-haiku-20241022-v1:0",
             "claude-3-opus": "anthropic.claude-3-opus-20240229-v1:0",
             "claude-3-sonnet": "anthropic.claude-3-sonnet-20240229-v1:0",
             "claude-3-haiku": "anthropic.claude-3-haiku-20240307-v1:0",
         }
-        self.default_model = "claude-3-5-sonnet"
+        # Common inference profile formats to try for Claude 4.1
+        self.claude_4_1_profiles = [
+            "us.anthropic.claude-opus-4-1-20250805-v1:0",  # Correct regional inference profile
+            f"arn:aws:bedrock:{region_name}::inference-profile/us.anthropic.claude-opus-4-1-20250805-v1:0",  # ARN format
+            "anthropic.claude-opus-4-1-20250805-v1:0",  # Direct format (fallback)
+        ]
+        self.default_model = "claude-3-5-sonnet"  # Default to faster Claude 3.5 Sonnet
+
+    def _invoke_model_with_retry(self, model_id: str, request_body: dict) -> dict:
+        """Invoke Bedrock model with Claude 4.1 inference profile retry logic"""
+        
+        # If it's Claude 4.1, try different inference profile formats
+        if "claude-opus-4-1" in model_id:
+            print(f"Claude 4.1 requested, trying {len(self.claude_4_1_profiles)} profiles...")
+            for i, profile_id in enumerate(self.claude_4_1_profiles):
+                try:
+                    print(f"Attempting Claude 4.1 profile {i+1}/{len(self.claude_4_1_profiles)}: {profile_id}")
+                    response = self.bedrock.invoke_model(
+                        modelId=profile_id,
+                        contentType="application/json",
+                        accept="application/json",
+                        body=json.dumps(request_body),
+                    )
+                    print(f"Success with Claude 4.1 profile: {profile_id}")
+                    return response
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"Claude 4.1 profile {i+1} failed: {error_msg}")
+                    
+                    # Check if it's a throughput/profile error
+                    if "on-demand throughput" in error_msg or "inference profile" in error_msg:
+                        print(f"Profile {i+1} failed due to throughput/profile issue, trying next...")
+                        continue
+                    else:
+                        # If it's a different error, re-raise it
+                        raise e
+            
+            # If all Claude 4.1 profiles failed, fall back to Claude 3.5 Sonnet
+            print("All Claude 4.1 profiles failed, falling back to Claude 3.5 Sonnet")
+            fallback_model_id = self.model_ids["claude-3-5-sonnet"]
+            return self.bedrock.invoke_model(
+                modelId=fallback_model_id,
+                contentType="application/json",
+                accept="application/json",
+                body=json.dumps(request_body),
+            )
+        else:
+            # For other models, use direct invocation
+            return self.bedrock.invoke_model(
+                modelId=model_id,
+                contentType="application/json",
+                accept="application/json",
+                body=json.dumps(request_body),
+            )
 
     async def process_query(self, query: str, model: str = None) -> Dict[str, Any]:
         """Process natural language query with AWS Bedrock Claude"""
@@ -49,8 +103,9 @@ Available AWS Cost Explorer MCP tools:
   * Parameters: {{"baseline_date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}, "comparison_date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}, "metric_for_comparison": "NetAmortizedCost"}}
 - get_dimension_values: Get available services, regions, etc.
   * Parameters: {{"date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}, "dimension": {{"dimension_key": "SERVICE|REGION|LINKED_ACCOUNT"}}}}
-- get_tag_values: Get available tag values
-  * Parameters: {{"date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}, "tag_key": "tag_name"}}
+- get_tag_values: Get available tag values for a SPECIFIC tag
+  * Parameters: {{"date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}, "tag_key": "specific_tag_name"}}
+  * IMPORTANT: Requires knowing the exact tag name. For discovering tag keys, use get_dimension_values instead.
 
 IMPORTANT: AWS Cost Metrics - Choose the correct metric based on user query:
 - "unblended cost/costs" → "UnblendedCost" (or "UNBLENDED_COST" for forecasts)
@@ -63,6 +118,31 @@ IMPORTANT: AWS Cost Metrics - Choose the correct metric based on user query:
 
 CRITICAL: For get_cost_forecast tool, use UNDERSCORE format: NET_AMORTIZED_COST, UNBLENDED_COST, etc.
 
+CRITICAL: Group By Format Rules - THIS IS MANDATORY!:
+- Dimensions (SERVICE, REGION, etc.): Use string format: "SERVICE"
+- Tags (owner, wk.cat.owner, etc.): ALWAYS use object format: {{"Type": "TAG", "Key": "tag_name"}}
+- NEVER EVER use "TAG:tag_name" format - AWS will reject this with validation error
+
+TAG FORMAT EXAMPLES - COPY THESE EXACTLY:
+- For wk.cat.owner tag: {{"Type": "TAG", "Key": "wk.cat.owner"}}
+- For wk.cat tag: {{"Type": "TAG", "Key": "wk.cat"}}
+- For owner tag: {{"Type": "TAG", "Key": "owner"}}
+- For environment tag: {{"Type": "TAG", "Key": "environment"}}
+
+CRITICAL: Tag Discovery Queries:
+- "What tag keys are available" → Use get_dimension_values with dimension_key: "TAG"
+- "List available tags" → Use get_dimension_values with dimension_key: "TAG" 
+- "Show me tag keys" → Use get_dimension_values with dimension_key: "TAG"
+
+CRITICAL: Tag Comparison vs Time Period Comparison:
+- "Which tag VALUES are more expensive" (same tag key) → Use get_cost_and_usage grouped by that tag
+- "Compare costs between July and August" → Use get_cost_and_usage_comparisons (compares time periods)  
+- "wk.cat.service vs wk.cat.repository" (different tag keys) → Use get_cost_and_usage filtered by first tag only, explain limitation
+- "This month vs last month" → Use get_cost_and_usage_comparisons (time comparison)
+
+IMPORTANT: AWS Cost Explorer cannot easily compare different tag keys in a single query.
+For "wk.cat.service vs wk.cat.repository" queries, focus on one tag and explain the limitation.
+
 Always return valid JSON with this structure:
 {{
     "query_type": "cost_analysis|forecast|comparison|meta",
@@ -71,7 +151,7 @@ Always return valid JSON with this structure:
         "date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}},
         "granularity": "DAILY|MONTHLY|HOURLY",
         "metric": "NetAmortizedCost|UnblendedCost|AmortizedCost|BlendedCost|NetUnblendedCost|UsageQuantity",
-        "group_by": "SERVICE|REGION|etc",
+        "group_by": "SERVICE" (for dimensions) OR {{"Type": "TAG", "Key": "tag_name"}} (for tags),
         ...
     }},
     "visualization": {{
@@ -97,11 +177,74 @@ Examples with EXACT parameter formats:
   "query_type": "cost_analysis",
   "tool_name": "get_cost_and_usage",
   "parameters": {{
-    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-DD"}},
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
     "granularity": "DAILY",
     "metric": "NetAmortizedCost",
     "group_by": "SERVICE"
   }}
+}}
+
+1b. Tag-based Cost Analysis Query:
+"Show me costs grouped by owner tags" →
+{{
+  "query_type": "cost_analysis",
+  "tool_name": "get_cost_and_usage",
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+    "granularity": "MONTHLY",
+    "metric": "NetAmortizedCost",
+    "group_by": {{"Type": "TAG", "Key": "owner"}}
+  }}
+}}
+
+1c. Account Context Query (still group by SERVICE):
+"Show me my AWS costs from july 1st to september 29th in the Dev AWS account" →
+{{
+  "query_type": "cost_analysis",
+  "tool_name": "get_cost_and_usage",
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+    "granularity": "MONTHLY",
+    "metric": "NetAmortizedCost",
+    "group_by": "SERVICE"
+  }}
+}}
+
+"Give me costs by wk.cat.owner tags" →
+{{
+  "query_type": "cost_analysis", 
+  "tool_name": "get_cost_and_usage",
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+    "granularity": "MONTHLY",
+    "metric": "NetAmortizedCost",
+    "group_by": {{"Type": "TAG", "Key": "wk.cat.owner"}}
+  }}
+}}
+
+1c. Tag Discovery Query:
+"What tag keys are available for my AWS costs?" →
+{{
+  "query_type": "cost_analysis",
+  "tool_name": "get_dimension_values",
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+    "dimension": {{"dimension_key": "TAG"}}
+  }}
+}}
+
+1d. Tag Key Comparison Query (Limited):
+"Which tag was more expensive for last month, wk.cat.service, or wk.cat.repository?" →
+{{
+  "query_type": "cost_analysis", 
+  "tool_name": "get_cost_and_usage",
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+    "granularity": "MONTHLY", 
+    "metric": "NetAmortizedCost",
+    "group_by": "SERVICE"
+  }},
+  "explanation": "AWS Cost Explorer cannot easily compare different tag keys in a single query. I'll show overall costs and suggest separate queries for each tag."
 }}
 
 2. Comparison Query (NOTE: ONLY use COMPLETE months):
@@ -162,10 +305,13 @@ Example for current time ({current_date}):
 CRITICAL FORMAT REQUIREMENTS:
 - group_by: Use STRING like "SERVICE", NOT array like ["SERVICE"]
 - dimension: Use OBJECT like {{"dimension_key": "SERVICE"}}, NOT string
+- GROUP BY LOGIC: Use "SERVICE" for cost breakdowns, "LINKED_ACCOUNT" only when explicitly asking to compare accounts
 - Comparisons: MUST have both "baseline_date_range" AND "comparison_date_range"
-- AWS DATE REQUIREMENT: end_date MUST be first day of NEXT month, NOT last day of current month
-  * WRONG: {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}}
-  * CORRECT: {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM+1-01"}}
+- AWS DATE REQUIREMENT: 
+  * For SINGLE MONTH queries: end_date MUST be BEFORE the beginning of next month (e.g., "2025-09-30" for September)
+  * For COMPARISON queries: end_date MUST be first day of next month (e.g., "2025-10-01" for September)
+  * WRONG single month: {{"start_date": "2025-09-01", "end_date": "2025-10-01"}}
+  * CORRECT single month: {{"start_date": "2025-09-01", "end_date": "2025-09-30"}}
 - COMPLETE MONTHS ONLY: Since today is {current_date}, current month may be INCOMPLETE
   * For comparisons, use: LAST_COMPLETE_MONTH vs PREVIOUS_COMPLETE_MONTH
   * NEVER include incomplete current month in comparisons
@@ -191,12 +337,7 @@ Cost Metric Keywords:
                 "messages": [{"role": "user", "content": user_prompt}],
             }
 
-            response = self.bedrock.invoke_model(
-                modelId=model_id,
-                contentType="application/json",
-                accept="application/json",
-                body=json.dumps(request_body),
-            )
+            response = self._invoke_model_with_retry(model_id, request_body)
 
             # Parse response
             response_body = json.loads(response["body"].read())
@@ -243,12 +384,7 @@ Keep it conversational and helpful, under 500 words.
                 "messages": [{"role": "user", "content": explanation_prompt}],
             }
 
-            response = self.bedrock.invoke_model(
-                modelId=model_id,
-                contentType="application/json",
-                accept="application/json",
-                body=json.dumps(request_body),
-            )
+            response = self._invoke_model_with_retry(model_id, request_body)
 
             response_body = json.loads(response["body"].read())
             return response_body["content"][0]["text"]
@@ -327,7 +463,6 @@ Keep it conversational and helpful, under 500 words.
 
         # For comparison queries, we need two complete months
         # Current month is incomplete, so we use previous months
-        # TODO: this seems funky, update this or remove it completely eventually
         if current_month >= 3:
             # Can compare (current-2) vs (current-1)
             baseline_month = current_month - 2
@@ -344,44 +479,35 @@ Keep it conversational and helpful, under 500 words.
             comparison_month = 11
             baseline_year = comparison_year = current_year - 1
 
-        # Calculate end dates (first day of next month)
-        if comparison_month < 12:
-            comparison_end_month = comparison_month + 1
-            comparison_end_year = comparison_year
-        else:
-            comparison_end_month = 1
-            comparison_end_year = comparison_year + 1
+        baseline_start = f"{baseline_year}-{baseline_month:02d}-01"
+        baseline_end = f"{comparison_year}-{comparison_month:02d}-01"
+        comparison_start = f"{comparison_year}-{comparison_month:02d}-01"
+        comparison_end = f"{comparison_year}-{comparison_month + 1:02d}-01"
 
         return {
             "baseline_date_range": {
-                "start_date": f"{baseline_year}-{baseline_month:02d}-01",
-                "end_date": f"{comparison_year}-{comparison_month:02d}-01",
+                "start_date": baseline_start,
+                "end_date": baseline_end,
             },
             "comparison_date_range": {
-                "start_date": f"{comparison_year}-{comparison_month:02d}-01",
-                "end_date": f"{comparison_end_year}-{comparison_end_month:02d}-01",
+                "start_date": comparison_start,
+                "end_date": comparison_end,
             },
         }
 
-    def _detect_cost_metric(self, query_lower: str) -> str:
-        """Detect cost metric from query text"""
-        # Check for specific metric keywords (order matters - check specific terms first)
-        if "net amortized" in query_lower:
-            return "NetAmortizedCost"
-        elif "net unblended" in query_lower:
-            return "NetUnblendedCost"
-        elif "amortized" in query_lower:
-            return "AmortizedCost"
-        elif "blended" in query_lower:
-            return "BlendedCost"
-        elif "unblended" in query_lower:
+    def _detect_cost_metric(self, query: str) -> str:
+        """Detect cost metric from query keywords"""
+        if "unblended" in query:
             return "UnblendedCost"
-        elif "usage quantity" in query_lower or "usage" in query_lower:
+        elif "net amortized" in query:
+            return "NetAmortizedCost"
+        elif "amortized" in query:
+            return "AmortizedCost"
+        elif "blended" in query:
+            return "BlendedCost"
+        elif "net unblended" in query:
+            return "NetUnblendedCost"
+        elif "usage quantity" in query:
             return "UsageQuantity"
         else:
-            # Default to NetAmortizedCost
-            return "NetAmortizedCost"
-
-    def list_available_models(self) -> Dict[str, str]:
-        """Return available Claude models in Bedrock"""
-        return self.model_ids
+            return "NetAmortizedCost"  # Default
