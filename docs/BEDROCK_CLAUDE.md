@@ -24,16 +24,43 @@ AWS Bedrock Claude Query Processor initialized
 
 ## **Available Models**
 
-The integration uses stable, production-tested Claude models in Bedrock:
+Based on comprehensive parameter quality benchmarking, the integration uses two Claude models:
 
-| Model | Bedrock ID | Best For | Status |
-|-------|------------|----------|---------|
-| **Claude 3.5 Sonnet** | `anthropic.claude-3-5-sonnet-20240620-v1:0` | General queries (default) |
-| **Claude 3 Opus** | `anthropic.claude-3-opus-20240229-v1:0` | Complex analysis |
-| **Claude 3 Sonnet** | `anthropic.claude-3-sonnet-20240229-v1:0` | Balanced performance |
-| **Claude 3 Haiku** | `anthropic.claude-3-haiku-20240307-v1:0` | Quick responses |
+| Model | Bedrock ID | Parameter Quality | Speed | Best For |
+|-------|------------|------------------|-------|----------|
+| **Claude 4.1 Opus** | `anthropic.claude-opus-4-1-20250805-v1:0` | Highest accuracy | Slower | **All queries (default)** |
+| **Claude 3.5 Sonnet** | `anthropic.claude-3-5-sonnet-20240620-v1:0` | Inconsistent | Faster | Optional for simple queries |
 
-**Note**: The system automatically uses Claude 3.5 Sonnet as the default model, optimized for cost analysis queries and natural language explanations.
+**Default Model**: Claude 4.1 Opus
+- Consistently generates correct AWS service names
+- Proper filter expression construction
+- Accurate purchase type terminology
+- Reliable across all query complexity levels
+
+**Why Opus?** For financial cost analysis, parameter accuracy is more important than response speed. Incorrect parameters can lead to wrong cost insights, which is unacceptable for financial tooling.
+
+**Claude 3.5 Haiku**: Removed from production due to 0% parameter quality accuracy. Cannot reliably generate correct filter expressions.
+
+## **Model Selection & Quality**
+
+### **Parameter Quality Testing**
+
+The application uses a comprehensive benchmark to validate model selection:
+
+**What's Tested:**
+- AWS service name accuracy (full names vs shortcuts)
+- Filter expression correctness
+- Purchase type terminology precision
+- Parameter structure and validation
+
+**Scoring:** Each query scored on 100-point scale
+- Base Success (20 pts): Query executes without errors
+- Filter Presence (30 pts): Correct filtering applied
+- Service Names (10 pts): Full AWS names used
+- Purchase Types (10 pts): Correct terminology
+- Expected Match (30 pts): Returns expected results
+
+**Results:** Claude 4.1 Opus demonstrates consistently superior parameter quality across all query types.
 
 ## **Cost & Performance Benefits**
 
@@ -44,8 +71,9 @@ The integration uses stable, production-tested Claude models in Bedrock:
 | **Cost Tracking** | Integrated with AWS billing | Separate billing systems |
 | **Security** | Uses existing AWS credentials | Additional API key management |
 | **Infrastructure** | Leverages existing AWS footprint | External dependencies |
+| **Quality** | Benchmark-validated accuracy | Unvalidated performance |
 
-**Result**: Streamlined integration with existing AWS infrastructure and no additional authentication complexity
+**Result**: Streamlined integration with existing AWS infrastructure, validated accuracy, and no additional authentication complexity
 
 ## **Enhanced Query Examples**
 
@@ -69,19 +97,19 @@ Natural language explanation
 ### **Complex Queries Now Work:**
 ```
 "Why did my storage costs spike 40% in September?"
-→ Compares Aug vs Sep, identifies S3/EBS drivers, provides AI explanation
+Compares Aug vs Sep, identifies S3/EBS drivers, provides AI explanation
 
 "Show me a breakdown of compute vs storage vs networking costs"
-→ Groups related services intelligently, recommends optimal visualization
+Groups related services intelligently, recommends optimal visualization
 
 "Forecast my AWS costs for next month"
-→ Creates sparkline forecast by default with confidence intervals
+Creates sparkline forecast by default with confidence intervals
 
 "What will my database costs be if usage grows 20%?"
-→ Analyzes historical patterns and provides intelligent projections
+Analyzes historical patterns and provides intelligent projections
 
 "Show me net amortized costs for EC2 in Q3"
-→ Automatically detects metric type and time period, ensures complete months
+Automatically detects metric type and time period, ensures complete months
 ```
 
 ## **IAM Permissions**
@@ -153,25 +181,28 @@ The system uses a robust processing pipeline:
 - **Error Recovery**: System gracefully handles Bedrock errors with informative fallbacks
 
 ### **Performance & Cost**
-- **Processing Speed**: ~1-2 seconds for most queries within AWS network
-- **Cost Efficiency**: Leverages existing AWS Bedrock usage with minimal incremental cost
-- **Smart Caching**: Unique query IDs prevent stale data issues
+- **Processing Speed**: Claude 4.1 Opus is slower but prioritizes accuracy for financial data
+- **Cost Efficiency**: Higher token cost justified by superior parameter quality
+- **Quality First**: For cost analysis, accurate parameters matter more than response speed
+- **User Choice**: Sonnet available as faster option with lower accuracy
 
 ## **Ready to Use!**
 
-The enhanced AWS Cost Explorer dashboard is now a fully-featured, production-ready cost analysis platform:
+The enhanced AWS Cost Explorer dashboard is now a fully-featured, cost analysis platform:
 
 **Key Achievements:**
-- **Exclusive AWS Bedrock Claude Integration**: Streamlined, no external dependencies
-- **Forecast Sparklines**: Default compact visualization with detailed cards on request  
-- **Comprehensive UI**: Professional interface with capabilities modal and optimized layout
-- **Smart Query Processing**: Context-aware understanding with intelligent fallbacks
-- **Production Quality**: Linted, formatted code with comprehensive documentation
+- **Benchmark-Validated Model Selection**: Claude 4.1 Opus default based on parameter quality testing
+- **AWS Bedrock Integration**: Streamlined, no external dependencies
+- **Accurate Parameter Generation**: Consistently correct AWS service names and filters
+- **Enhanced Query Processing**: Auto-correction for common terminology mistakes
+- **Comprehensive Testing**: 100-point quality scoring validates all queries
+- **Production Quality**: Clean codebase with comprehensive documentation
 
 **Perfect for:**
-- Quick daily cost insights with sparkline trends
-- Deep-dive analysis with AI-powered explanations  
-- Executive reporting with professional visualizations
+- Accurate financial cost analysis with reliable parameters
+- Complex queries requiring proper AWS terminology
+- Tag-based cost filtering and organization
 - Cost optimization research with intelligent comparisons
+- Executive reporting requiring data accuracy
 
-The system leverages your existing AWS infrastructure while providing enterprise-grade cost analysis capabilities.
+The system leverages your existing AWS infrastructure while providing benchmark-validated, enterprise-grade cost analysis capabilities.

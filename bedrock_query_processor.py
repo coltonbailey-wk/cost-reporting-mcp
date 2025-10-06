@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 AWS Bedrock Claude query processor for enhanced natural language understanding
 """
@@ -18,7 +17,6 @@ class BedrockQueryProcessor:
         self.model_ids = {
             "claude-opus-4-1": "anthropic.claude-opus-4-1-20250805-v1:0",  # Claude 4.1 primary
             "claude-3-5-sonnet": "anthropic.claude-3-5-sonnet-20240620-v1:0",
-            "claude-3-5-haiku": "anthropic.claude-3-5-haiku-20241022-v1:0",
             "claude-3-opus": "anthropic.claude-3-opus-20240229-v1:0",
             "claude-3-sonnet": "anthropic.claude-3-sonnet-20240229-v1:0",
             "claude-3-haiku": "anthropic.claude-3-haiku-20240307-v1:0",
@@ -84,7 +82,57 @@ class BedrockQueryProcessor:
         model_id = self.model_ids.get(model or self.default_model)
 
         current_date = datetime.now().strftime("%Y-%m-%d")
-        system_prompt = f"""You are an AWS Cost Explorer query processor.
+        system_prompt = """You are an AWS Cost Explorer query processor.
+
+CRITICAL FILTERING RULES - READ FIRST
+
+RULE 1: When user mentions a SPECIFIC TAG VALUE (like "squad-one-jam", "production", "dev"), you MUST:
+1. Set group_by to TAG format: {{"Type": "TAG", "Key": "tag_name"}}
+2. Add filter_expression to filter to that specific value
+3. NEVER group by "SERVICE" when filtering by tag values
+
+RULE 2: Tag Value Detection - These phrases REQUIRE filtering:
+- "costs for [tag-value]" → MUST filter by that tag value
+- "show me [tag-value] costs" → MUST filter by that tag value  
+- "[tag-value] deployment.environment tag" → MUST filter by that tag value
+- "[tag-value] environment" → MUST filter by that tag value
+- "untagged" or "no tag" or "missing tag" → Use empty string "" as the tag value
+- "what costs are untagged" → Filter by tag value ""
+
+RULE 3: Filter Expression Format (MANDATORY):
+- Parameter name MUST be "filter_expression" (NOT "filter")
+- For tag filtering: "filter_expression": {{"Tags": {{"Key": "tag_name", "Values": ["tag_value"], "MatchOptions": ["EQUALS"]}}}}
+- ALWAYS include "MatchOptions": ["EQUALS"]
+
+WRONG: "Give me costs for squad-one-jam" → group_by: "SERVICE" (NO filter_expression)
+CORRECT: "Give me costs for squad-one-jam" → group_by: {{"Type": "TAG", "Key": "deployment.environment"}}, filter_expression: {{"Tags": {{"Key": "deployment.environment", "Values": ["squad-one-jam"], "MatchOptions": ["EQUALS"]}}}}
+
+DECISION TREE FOR EVERY QUERY:
+1. Does the query mention a specific tag value? (squad-one-jam, production, dev, etc.)
+   → YES: Use group_by TAG format + filter_expression
+   → NO: Use group_by "SERVICE"
+
+2. Does the query ask for "costs for [specific-value]"?
+   → YES: MUST include filter_expression
+   → NO: No filter needed
+
+TEMPLATE FOR TAG VALUE QUERIES - COPY EXACTLY:
+When user asks for costs for a specific tag value, use this EXACT template:
+{{
+  "query_type": "cost_analysis",
+  "tool_name": "get_cost_and_usage",
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}},
+    "granularity": "MONTHLY",
+    "metric": "NetAmortizedCost",
+    "group_by": {{"Type": "TAG", "Key": "REPLACE_WITH_TAG_KEY"}},
+    "filter_expression": {{"Tags": {{"Key": "REPLACE_WITH_TAG_KEY", "Values": ["REPLACE_WITH_TAG_VALUE"], "MatchOptions": ["EQUALS"]}}}}
+  }}
+}}
+
+For "squad-one-jam deployment.environment tag":
+- REPLACE_WITH_TAG_KEY = "deployment.environment"  
+- REPLACE_WITH_TAG_VALUE = "squad-one-jam"
 
 Your job is to analyze natural language queries about AWS costs and return structured JSON responses that specify:
 1. Query type (cost_analysis, forecast, comparison, meta)
@@ -94,7 +142,7 @@ Your job is to analyze natural language queries about AWS costs and return struc
 
 Available AWS Cost Explorer MCP tools:
 - get_cost_and_usage: Get cost data for date ranges
-  * Parameters: {{"date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}, "granularity": "DAILY|MONTHLY", "metric": "NetAmortizedCost", "group_by": "SERVICE"}}
+  * Parameters: {{"date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}, "granularity": "DAILY|MONTHLY", "metric": "NetAmortizedCost", "group_by": "SERVICE", "filter_expression": {{"Tags": {{"Key": "tag_name", "Values": ["tag_value"], "MatchOptions": ["EQUALS"]}}}}}
 - get_cost_forecast: Predict future costs
   * Parameters: {{"date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}}, "granularity": "MONTHLY", "metric": "NET_AMORTIZED_COST"}}
   * IMPORTANT: start_date must be TODAY or earlier, end_date must be in the FUTURE
@@ -134,6 +182,14 @@ CRITICAL: Tag Discovery Queries:
 - "List available tags" → Use get_dimension_values with dimension_key: "TAG" 
 - "Show me tag keys" → Use get_dimension_values with dimension_key: "TAG"
 
+CRITICAL: Filter Expression Format - THIS IS MANDATORY!:
+- Parameter name MUST be "filter_expression" (NOT "filter")
+- For tag filtering: "filter_expression": {{"Tags": {{"Key": "tag_name", "Values": ["tag_value"], "MatchOptions": ["EQUALS"]}}}}
+- For dimension filtering: "filter_expression": {{"Dimensions": {{"Key": "SERVICE", "Values": ["service_name"], "MatchOptions": ["EQUALS"]}}}}
+- NEVER use "filter" - it will be ignored by the MCP server
+- ALWAYS include "MatchOptions": ["EQUALS"] for proper filtering
+- Example: "filter_expression": {{"Tags": {{"Key": "deployment.environment", "Values": ["squad-one-jam"], "MatchOptions": ["EQUALS"]}}}}
+
 CRITICAL: Tag Comparison vs Time Period Comparison:
 - "Which tag VALUES are more expensive" (same tag key) → Use get_cost_and_usage grouped by that tag
 - "Compare costs between July and August" → Use get_cost_and_usage_comparisons (compares time periods)  
@@ -144,45 +200,40 @@ IMPORTANT: AWS Cost Explorer cannot easily compare different tag keys in a singl
 For "wk.cat.service vs wk.cat.repository" queries, focus on one tag and explain the limitation.
 
 Always return valid JSON with this structure:
-{{
+{
     "query_type": "cost_analysis|forecast|comparison|meta",
-    "tool_name": "tool_name_here",
-    "parameters": {{
-        "date_range": {{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"}},
+    "tool_name": "tool_name_here", 
+    "parameters": {
+        "date_range": {"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"},
         "granularity": "DAILY|MONTHLY|HOURLY",
         "metric": "NetAmortizedCost|UnblendedCost|AmortizedCost|BlendedCost|NetUnblendedCost|UsageQuantity",
-        "group_by": "SERVICE" (for dimensions) OR {{"Type": "TAG", "Key": "tag_name"}} (for tags),
+        "group_by": "SERVICE" (for dimensions) OR {"Type": "TAG", "Key": "tag_name"} (for tags),
         ...
-    }},
-    "visualization": {{
+    },
+    "visualization": {
         "chart_type": "sparkline|timeline|bar|pie|table",
         "title": "Chart title",
         "description": "Brief explanation"
-    }},
+    },
     "explanation": "Natural language explanation of what will be done"
-}}
+}
 
-Current date context: {current_date}"""
+Current date context: """ + current_date
 
-        user_prompt = f"""
-Analyze this AWS cost query and return the structured JSON response:
-
-Query: "{query}"
-
-Examples with EXACT parameter formats:
+        user_prompt = f"MANDATORY CHECK: Does the query \"{query}\" mention any specific tag value?\nIf YES: You MUST use group_by TAG format and include filter_expression!\n\nAnalyze this AWS cost query and return the structured JSON response:\n\nQuery: \"{query}\"\n\nExamples with EXACT parameter formats:" + """
 
 1. Cost Analysis Query:
 "Show my EC2 costs last month" →
-{{
+{
   "query_type": "cost_analysis",
   "tool_name": "get_cost_and_usage",
-  "parameters": {{
-    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+  "parameters": {
+    "date_range": {"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"},
     "granularity": "DAILY",
     "metric": "NetAmortizedCost",
     "group_by": "SERVICE"
-  }}
-}}
+  }
+}
 
 1b. Tag-based Cost Analysis Query:
 "Show me costs grouped by owner tags" →
@@ -219,6 +270,46 @@ Examples with EXACT parameter formats:
     "granularity": "MONTHLY",
     "metric": "NetAmortizedCost",
     "group_by": {{"Type": "TAG", "Key": "wk.cat.owner"}}
+  }}
+}}
+
+FILTERING EXAMPLE - COPY THIS PATTERN:
+"Give me costs for squad-one-jam deployment.environment tag" →
+{{
+  "query_type": "cost_analysis",
+  "tool_name": "get_cost_and_usage", 
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+    "granularity": "MONTHLY",
+    "metric": "NetAmortizedCost",
+    "group_by": {{"Type": "TAG", "Key": "deployment.environment"}},
+    "filter_expression": {{"Tags": {{"Key": "deployment.environment", "Values": ["squad-one-jam"], "MatchOptions": ["EQUALS"]}}}}
+  }}
+}}
+
+"Show me production environment costs" →
+{{
+  "query_type": "cost_analysis",
+  "tool_name": "get_cost_and_usage", 
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+    "granularity": "MONTHLY",
+    "metric": "NetAmortizedCost",
+    "group_by": {{"Type": "TAG", "Key": "environment"}},
+    "filter_expression": {{"Tags": {{"Key": "environment", "Values": ["production"], "MatchOptions": ["EQUALS"]}}}}
+  }}
+}}
+
+"What deployment.environment costs are untagged?" →
+{{
+  "query_type": "cost_analysis",
+  "tool_name": "get_cost_and_usage", 
+  "parameters": {{
+    "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
+    "granularity": "MONTHLY",
+    "metric": "NetAmortizedCost",
+    "group_by": "SERVICE",
+    "filter_expression": {{"Tags": {{"Key": "deployment.environment", "Values": [""], "MatchOptions": ["EQUALS"]}}}}
   }}
 }}
 
@@ -326,6 +417,14 @@ Cost Metric Keywords:
 - "net unblended" = NetUnblendedCost
 - "unblended" = UnblendedCost
 - no metric specified = NetAmortizedCost (default)
+
+FINAL CHECK BEFORE RESPONDING:
+1. Does the query mention any specific tag value?
+   → If YES: MUST include filter_expression and use TAG group_by
+2. Is group_by set to "SERVICE" when filtering by tag values?
+   → If YES: This is WRONG - change to TAG format
+3. Is filter_expression missing when user asks for specific tag value?
+   → If YES: This is WRONG - add filter_expression
 """
 
         try:

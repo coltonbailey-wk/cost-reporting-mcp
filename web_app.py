@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Web application that integrates with the official AWS Cost Explorer MCP server
 """

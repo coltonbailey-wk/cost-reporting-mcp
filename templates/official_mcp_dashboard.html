@@ -40,9 +40,8 @@
                         id="model-selector" 
                         class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                     >
-                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Faster)</option>
-                        <option value="claude-3-5-haiku">Claude 3.5 Haiku (Fastest)</option>
-                        <option value="claude-opus-4-1">Claude 4.1 (Most Advanced)</option>
+                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Recommended)</option>
+                        <option value="claude-opus-4-1">Claude 4.1 Opus (Most Advanced)</option>
                     </select>
                     <div class="text-xs text-gray-500 max-w-xs">
                         <span id="model-description">Faster responses for shorter queries and basic analysis</span>
@@ -227,6 +226,9 @@
                 alert('Please enter a query');
                 return;
             }
+
+            // Store query for frontend processing
+            window.lastQuery = query;
 
             // Show loading
             document.getElementById('loading').classList.remove('hidden');
@@ -573,14 +575,54 @@
             const summaryCard = document.createElement('div');
             summaryCard.className = 'bg-green-50 border border-green-200 rounded-lg p-4 mb-4';
             
-            // Calculate totals
-            const periods = Object.keys(costData).filter(key => key !== 'Service Total');
-            const serviceTotals = costData['Service Total'] || {};
-            // Use the authoritative total from the data instead of summing individual services
-            const totalCost = serviceTotals['Total NetAmortizedCost'] || 
-                             Object.values(serviceTotals).reduce((sum, value) => {
-                                 return sum + (typeof value === 'number' ? value : 0);
-                             }, 0);
+            // Calculate totals - handle different total key formats
+            const periods = Object.keys(costData).filter(key => 
+                !key.includes('Total') && !key.includes('total')
+            );
+            
+            // Find the total row - could be 'Service Total', 'Deployment.Environment Total', etc.
+            const totalKey = Object.keys(costData).find(key => 
+                key.includes('Total') || key.includes('total')
+            );
+            const serviceTotals = totalKey ? costData[totalKey] : {};
+            
+            // Always use the authoritative "Total NetAmortizedCost" from any totals section
+            let totalCost = 0;
+            if (serviceTotals['Total NetAmortizedCost']) {
+                // Use the authoritative total from the data (works for both filtered and unfiltered)
+                totalCost = serviceTotals['Total NetAmortizedCost'];
+            } else {
+                // For filtered queries, find the specific tag/dimension value
+                const queryLower = (window.lastQuery || '').toLowerCase();
+                
+                // Extract quoted values from query (e.g., "squad-one-jam")
+                const quotedMatches = queryLower.match(/"([^"]+)"/g);
+                let targetValue = null;
+                
+                if (quotedMatches && quotedMatches.length >= 1) {
+                    // Use the first quoted value as the target (e.g., "squad-one-jam")
+                    targetValue = quotedMatches[0].replace(/"/g, '');
+                    
+                    // Look for the corresponding key in serviceTotals
+                    const targetKey = Object.keys(serviceTotals).find(key => 
+                        key.toLowerCase().includes(targetValue)
+                    );
+                    
+                    if (targetKey && typeof serviceTotals[targetKey] === 'number') {
+                        totalCost = serviceTotals[targetKey];
+                    }
+                }
+                
+                // If no specific value found, sum all numeric values except 'Total NetAmortizedCost'
+                if (totalCost === 0) {
+                    totalCost = Object.entries(serviceTotals).reduce((sum, [key, value]) => {
+                        if (key !== 'Total NetAmortizedCost' && typeof value === 'number') {
+                            return sum + value;
+                        }
+                        return sum;
+                    }, 0);
+                }
+            }
             
             summaryCard.innerHTML = `
                 <h4 class="font-semibold text-green-900 mb-2">Cost Summary</h4>
@@ -908,9 +950,8 @@
         const modelDescription = document.getElementById('model-description');
         
         const modelDescriptions = {
-            'claude-3-5-sonnet': 'Faster responses for shorter queries and basic analysis',
-            'claude-3-5-haiku': 'Fastest responses for simple queries',
-            'claude-opus-4-1': 'Most advanced model with best reasoning capabilities'
+            'claude-3-5-sonnet': 'Recommended for most queries - reliable filtering and fast responses',
+            'claude-opus-4-1': 'Most advanced model with best reasoning capabilities for complex analysis'
         };
         
         // Update description when model changes

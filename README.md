@@ -1,12 +1,12 @@
 # AWS Cost Explorer Official MCP - Management Dashboard
 
-A powerful web application that integrates with the **official AWS Cost Explorer MCP server** from [AWS Labs](https://github.com/awslabs/mcp/tree/main/src/cost-explorer-mcp-server) to provide comprehensive AWS cost analysis and management insights. Enhanced with **AWS Bedrock Claude** for intelligent natural language processing and advanced query understanding.
+A powerful web application that integrates with the **official AWS Cost Explorer MCP server** from [AWS Labs](https://github.com/awslabs/mcp/tree/main/src/cost-explorer-mcp-server) to provide comprehensive AWS cost analysis and management insights. Enhanced with **AWS Bedrock Claude 4.1 Opus** for intelligent natural language processing and accurate parameter generation.
 
 ### **Official AWS Support**
 - **Maintained by AWS Labs**: Official AWS support and updates
 - **Standard MCP Protocol**: Full MCP specification compliance
 - **Cost Explorer Integration**: Direct integration with AWS Cost Explorer API
-- **AWS Bedrock Claude**: Intelligent query processing with no additional API keys needed
+- **AWS Bedrock Claude 4.1 Opus**: Benchmark-validated parameter quality with no additional API keys needed
 
 ### **Official MCP Tools Available**
 
@@ -49,14 +49,14 @@ Try these queries immediately to see the enhanced features:
 
 ## **Smart Natural Language Understanding**
 
-This dashboard features **AWS Bedrock Claude-powered query processing** that intelligently understands natural language queries and provides sophisticated responses. The system automatically detects query intent, extracts relevant parameters, and generates appropriate visualizations with natural language explanations.
+This dashboard features **AWS Bedrock Claude 4.1 Opus** for query processing, selected through comprehensive parameter quality benchmarking. The system ensures accurate AWS Cost Explorer API parameter generation for reliable financial analysis.
 
 **Key Intelligence Features:**
-- **Advanced Query Understanding**: Powered by AWS Bedrock Claude for context-aware processing
+- **Accurate Parameter Generation**: Claude 4.1 Opus generates correct AWS service names and filter expressions
 - **Smart Metric Detection**: Automatically recognizes cost metrics like "net amortized costs"
 - **Intelligent Date Parsing**: Handles complex time expressions and ensures complete months for comparisons
-- **Automatic Visualization Selection**: Chooses optimal chart types based on query context
-- **Natural Language Explanations**: Provides AI-generated insights alongside data visualizations
+- **Auto-Correction**: Enhanced processor fixes common terminology mistakes (e.g., "Reserved" to "Standard Reserved Instances")
+- **Quality First**: Accuracy prioritized over speed for financial data integrity
 
 ### **Account & System Information**
 Get information about your AWS setup and dashboard capabilities:
@@ -162,13 +162,13 @@ The system parses time periods from your queries:
 - **Interactive forecast charts** with trend lines and confidence ranges
 
 ### **Smart Query Processing**
-- **AWS Bedrock Claude Integration** - Advanced natural language understanding
-- **Intelligent query classification** with context awareness and fallback protection
+- **AWS Bedrock Claude 4.1 Opus** - Benchmark-validated for highest parameter quality
+- **Enhanced Auto-Correction** - Fixes common AWS terminology mistakes automatically
+- **Accurate Service Names** - Uses full AWS service names, not shortcuts
 - **Smart metric detection** - recognizes "net amortized costs", "unblended costs", etc.
-- **Advanced date parsing** with complete month validation for accurate comparisons
-- **Dynamic visualization selection** - automatically chooses optimal chart types
-- **Natural language explanations** - AI-generated insights for every query result
-- **Account information queries** for system details
+- **Advanced date parsing** - complete month validation for accurate comparisons
+- **Purchase type precision** - ensures correct terminology (e.g., "Standard Reserved Instances")
+- **Account information queries** - system details and AWS account info
 - **Meta query preprocessing** - prevents misinterpretation of system queries
 
 ### **Easy User Interface**
@@ -196,15 +196,22 @@ Web Browser → FastAPI App → AWS Bedrock Claude → Official AWS MCP Server �
 
 ```
 cost-explorer-official-mcp/
-├── web_app.py                    # FastAPI web application
-├── bedrock_query_processor.py    # AWS Bedrock Claude integration
+├── web_app.py                          # FastAPI web application
+├── bedrock_query_processor.py          # AWS Bedrock Claude integration
+├── bedrock_query_processor_enhanced.py # Enhanced processor with auto-correction
 ├── templates/
-│   └── official_mcp_dashboard.html # Frontend
+│   └── official_mcp_dashboard.html     # Frontend dashboard
+├── test/
+│   ├── benchmark.py                    # Parameter quality benchmark
+│   └── README.md                       # Benchmark documentation
+├── docs/
+│   ├── adr/
+│   │   └── 001-ai-model-selection.md   # Model selection ADR with benchmark methodology
+│   ├── BEDROCK_CLAUDE.md               # Bedrock integration guide
+│   └── README.md                       # Documentation index
 ├── requirements.txt              
-├── start_official_mcp.sh        # Easy startup script
-├── .gitignore                    
-├── README.md                    # This documentation
-└── BEDROCK_CLAUDE.md           # Bedrock integration details
+├── start_official_mcp.sh              # Easy startup script
+└── README.md                          # This documentation
 ```
 
 ## **Security & Permissions**
@@ -244,21 +251,21 @@ For current pricing information, refer to the [AWS Cost Explorer Pricing page](h
 
 ## **Key Benefits of Official MCP**
 
-| Feature | Custom MCP | Official AWS MCP + Bedrock |
-|---------|------------|----------------------------|
+| Feature | Custom MCP | Official AWS MCP + Claude 4.1 Opus |
+|---------|------------|-------------------------------------|
 | **Maintenance** | Custom implementation | Official AWS support |
 | **Updates** | Manual updates needed | Automatic updates from AWS |
 | **Features** | Basic cost analysis | Full Cost Explorer capabilities |
-| **AI Processing** | Not available | **AWS Bedrock Claude integration** |
-| **Query Understanding** | Simple keyword matching | **Advanced NLP with context awareness** |
-| **Cost Comparison** | Not available | NEW AWS feature with AI explanations |
+| **AI Model** | Not available | **Claude 4.1 Opus (benchmark-validated)** |
+| **Parameter Quality** | Not available | **Highest accuracy for AWS service names & filters** |
+| **Auto-Correction** | Not available | **Enhanced processor fixes terminology mistakes** |
+| **Cost Comparison** | Not available | NEW AWS feature with accurate parameter generation |
 | **Cost Drivers** | Not available | Top 10 drivers with intelligent analysis |
 | **Forecasting** | Basic | **Sparkline forecasts + detailed cards** |
 | **Chart Types** | Basic tables | Sparklines, timelines, bar charts, pie charts |
-| **Natural Language** | Not available | **AI-generated explanations for all queries** |
+| **Quality Assurance** | Not available | **100-point parameter quality scoring** |
 | **Account Info** | Not available | AWS account & region details |
 | **Help System** | Not available | **Comprehensive capabilities modal** |
-| **Production Ready** | Custom | Battle-tested by AWS + Enhanced UI |
 
 ## **Advanced Usage**
 
@@ -309,18 +316,10 @@ The official MCP server also supports Docker deployment:
 }
 ```
 
-## **Code Quality & Standards**
-
-This project maintains high code quality standards:
-- **Python Code Formatting**: Formatted with Black and imports organized with isort
-- **Linting**: Compliant with flake8 standards for clean, maintainable code
-- **Version Control**: Comprehensive .gitignore to exclude build artifacts and cache files
-- **Documentation**: Detailed markdown documentation for all features and integrations
-- **Professional UI**: Clean, emoji-free interface optimized for business use
-
 ## **References**
 
 - [Official AWS Cost Explorer MCP Server](https://github.com/awslabs/mcp/tree/main/src/cost-explorer-mcp-server)
-- [AWS Bedrock Claude Integration](BEDROCK_CLAUDE.md) - Detailed setup and usage guide
+- [AWS Bedrock Claude Integration](docs/BEDROCK_CLAUDE.md) - Detailed setup and usage guide
+- [AI Model Selection ADR](docs/adr/001-ai-model-selection.md) - Benchmark methodology and model selection rationale
 - [AWS Cost Explorer Pricing](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/)
 - [AWS Cost Comparison Feature](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-cost-comparison.html)
