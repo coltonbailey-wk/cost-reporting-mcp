@@ -22,17 +22,36 @@ The official AWS Cost Explorer MCP server provides these tools:
 
 ## **Quick Start**
 
-### **Option 1: Easy Start**
+### **Option 1: Using Make (Recommended)**
+```bash
+cd cost-explorer-official-mcp
+make start
+```
+
+### **Option 2: Using Startup Script**
 ```bash
 cd cost-explorer-official-mcp
 ./start_official_mcp.sh
 ```
 
-### **Option 2: Manual Start**
+### **Option 3: Manual Start**
 ```bash
 cd cost-explorer-official-mcp
 pip3 install -r requirements.txt
 python3 web_app.py
+```
+
+### **Available Make Commands**
+```bash
+make help     # Show all available commands
+make start    # Start the server
+make stop     # Stop the server
+make install  # Install dependencies (includes ruff)
+make lint     # Run linting checks with ruff
+make format   # Format code with ruff
+make check    # Run lint + format check without modifying files
+make clean    # Clean up cache files
+make test     # Run benchmark tests
 ```
 
 ### **Access the Dashboard**
@@ -203,14 +222,15 @@ cost-explorer-official-mcp/
 │   └── official_mcp_dashboard.html     # Frontend dashboard
 ├── test/
 │   ├── benchmark.py                    # Parameter quality benchmark
-│   └── README.md                       # Benchmark documentation
+│   └── BENCHMARK.md                    # Benchmark documentation
 ├── docs/
 │   ├── adr/
 │   │   └── 001-ai-model-selection.md   # Model selection ADR with benchmark methodology
 │   ├── BEDROCK_CLAUDE.md               # Bedrock integration guide
 │   └── README.md                       # Documentation index
-├── requirements.txt              
-├── start_official_mcp.sh              # Easy startup script
+├── requirements.txt                    # Python dependencies
+├── start_official_mcp.sh              # Startup script
+├── Makefile                           # Build automation (start, lint, format, test)
 └── README.md                          # This documentation
 ```
 

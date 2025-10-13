@@ -3,9 +3,9 @@ Enhanced AWS Bedrock Claude query processor with auto-correction capabilities
 """
 
 import json
-import re
 from datetime import datetime
 from typing import Any, Dict, Optional
+
 import boto3
 
 
@@ -13,13 +13,13 @@ class EnhancedBedrockQueryProcessor:
     def __init__(self, region_name: str = "us-east-1"):
         """Initialize AWS Bedrock client with enhanced capabilities"""
         self.bedrock = boto3.client("bedrock-runtime", region_name=region_name)
-        
+
         # Available Claude models in Bedrock (using model IDs and inference profiles)
         self.model_ids = {
             "claude-opus-4-1": "anthropic.claude-opus-4-1-20250805-v1:0",  # Claude 4.1 primary
-            "claude-3-5-sonnet": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+            "claude-sonnet-4": "anthropic.claude-sonnet-4-20250514-v1:0",
         }
-        
+
         # Common inference profile formats to try for Claude 4.1
         self.claude_4_1_profiles = [
             "us.anthropic.claude-opus-4-1-20250805-v1:0",  # Correct regional inference profile
@@ -27,35 +27,38 @@ class EnhancedBedrockQueryProcessor:
             "anthropic.claude-opus-4-1-20250805-v1:0",  # Direct format (fallback)
         ]
         
+        # Common inference profile formats to try for Claude Sonnet 4
+        self.claude_sonnet_4_profiles = [
+            "us.anthropic.claude-sonnet-4-20250514-v1:0",  # Correct regional inference profile
+            f"arn:aws:bedrock:{region_name}::inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0",  # ARN format
+            "anthropic.claude-sonnet-4-20250514-v1:0",  # Direct format (fallback)
+        ]
+
         self.default_model = "claude-opus-4-1"  # Default to most accurate Claude 4.1 Opus
-        
+
         # AWS service name mappings for common shortcuts
         self.service_name_mappings = {
             # EC2 variations
             "EC2": "Amazon Elastic Compute Cloud - Compute",
-            "ec2": "Amazon Elastic Compute Cloud - Compute", 
+            "ec2": "Amazon Elastic Compute Cloud - Compute",
             "Elastic Compute Cloud": "Amazon Elastic Compute Cloud - Compute",
             "Amazon EC2": "Amazon Elastic Compute Cloud - Compute",
-            
             # RDS variations
             "RDS": "Amazon Relational Database Service",
             "rds": "Amazon Relational Database Service",
             "Relational Database": "Amazon Relational Database Service",
-            
             # S3 variations
             "S3": "Amazon Simple Storage Service",
             "s3": "Amazon Simple Storage Service",
             "Simple Storage": "Amazon Simple Storage Service",
-            
             # Lambda variations
             "Lambda": "AWS Lambda",
             "lambda": "AWS Lambda",
-            
             # CloudWatch variations
             "CloudWatch": "AmazonCloudWatch",
             "cloudwatch": "AmazonCloudWatch",
         }
-        
+
         # Purchase type mappings
         self.purchase_type_mappings = {
             "Reserved": "Standard Reserved Instances",
@@ -72,13 +75,15 @@ class EnhancedBedrockQueryProcessor:
 
     def _invoke_model_with_retry(self, model_id: str, request_body: dict) -> dict:
         """Invoke Bedrock model with Claude 4.1 inference profile retry logic"""
-        
+
         # If it's Claude 4.1, try different inference profile formats
         if "claude-opus-4-1" in model_id:
             print(f"Claude 4.1 requested, trying {len(self.claude_4_1_profiles)} profiles...")
             for i, profile_id in enumerate(self.claude_4_1_profiles):
                 try:
-                    print(f"Attempting Claude 4.1 profile {i+1}/{len(self.claude_4_1_profiles)}: {profile_id}")
+                    print(
+                        f"Attempting Claude 4.1 profile {i + 1}/{len(self.claude_4_1_profiles)}: {profile_id}"
+                    )
                     response = self.bedrock.invoke_model(
                         modelId=profile_id,
                         contentType="application/json",
@@ -89,19 +94,60 @@ class EnhancedBedrockQueryProcessor:
                     return response
                 except Exception as e:
                     error_msg = str(e)
-                    print(f"Claude 4.1 profile {i+1} failed: {error_msg}")
-                    
+                    print(f"Claude 4.1 profile {i + 1} failed: {error_msg}")
+
                     # Check if it's a throughput/profile error
                     if "on-demand throughput" in error_msg or "inference profile" in error_msg:
-                        print(f"Profile {i+1} failed due to throughput/profile issue, trying next...")
+                        print(
+                            f"Profile {i + 1} failed due to throughput/profile issue, trying next..."
+                        )
                         continue
                     else:
                         # If it's a different error, re-raise it
                         raise e
-            
-            # If all Claude 4.1 profiles failed, fall back to Claude 3.5 Sonnet
-            print("All Claude 4.1 profiles failed, falling back to Claude 3.5 Sonnet")
-            fallback_model_id = self.model_ids["claude-3-5-sonnet"]
+
+            # If all Claude 4.1 profiles failed, fall back to Claude Sonnet 4
+            print("All Claude 4.1 profiles failed, falling back to Claude Sonnet 4")
+            fallback_model_id = self.model_ids["claude-sonnet-4"]
+            return self.bedrock.invoke_model(
+                modelId=fallback_model_id,
+                contentType="application/json",
+                accept="application/json",
+                body=json.dumps(request_body),
+            )
+        # If it's Claude Sonnet 4, try different inference profile formats
+        elif "claude-sonnet-4" in model_id:
+            print(f"Claude Sonnet 4 requested, trying {len(self.claude_sonnet_4_profiles)} profiles...")
+            for i, profile_id in enumerate(self.claude_sonnet_4_profiles):
+                try:
+                    print(
+                        f"Attempting Claude Sonnet 4 profile {i + 1}/{len(self.claude_sonnet_4_profiles)}: {profile_id}"
+                    )
+                    response = self.bedrock.invoke_model(
+                        modelId=profile_id,
+                        contentType="application/json",
+                        accept="application/json",
+                        body=json.dumps(request_body),
+                    )
+                    print(f"Success with Claude Sonnet 4 profile: {profile_id}")
+                    return response
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"Claude Sonnet 4 profile {i + 1} failed: {error_msg}")
+
+                    # Check if it's a throughput/profile error
+                    if "on-demand throughput" in error_msg or "inference profile" in error_msg:
+                        print(
+                            f"Profile {i + 1} failed due to throughput/profile issue, trying next..."
+                        )
+                        continue
+                    else:
+                        # If it's a different error, re-raise it
+                        raise e
+
+            # If all Claude Sonnet 4 profiles failed, try direct model ID as fallback
+            print("All Claude Sonnet 4 profiles failed, trying direct model ID")
+            fallback_model_id = self.model_ids["claude-sonnet-4"]
             return self.bedrock.invoke_model(
                 modelId=fallback_model_id,
                 contentType="application/json",
@@ -121,7 +167,7 @@ class EnhancedBedrockQueryProcessor:
     def _get_enhanced_system_prompt(self) -> str:
         """Get enhanced system prompt with AWS service name examples"""
         current_date = datetime.now().strftime("%Y-%m-%d")
-        
+
         return f"""You are an AWS Cost Explorer query processor with STRICT AWS service name requirements.
 
 CRITICAL AWS SERVICE NAME RULES:
@@ -129,7 +175,7 @@ CRITICAL AWS SERVICE NAME RULES:
 2. ALWAYS use the complete AWS service names as they appear in billing
 
 COMMON MISTAKES TO AVOID:
-WRONG: "EC2" -> CORRECT: "Amazon Elastic Compute Cloud - Compute" 
+WRONG: "EC2" -> CORRECT: "Amazon Elastic Compute Cloud - Compute"
 WRONG: "RDS" -> CORRECT: "Amazon Relational Database Service"
 WRONG: "S3" -> CORRECT: "Amazon Simple Storage Service"
 WRONG: "Lambda" -> CORRECT: "AWS Lambda"
@@ -138,7 +184,7 @@ WRONG: "Reserved" -> CORRECT: "Standard Reserved Instances"
 
 EXACT SERVICE NAMES FOR COMMON SERVICES:
 - EC2 Compute: "Amazon Elastic Compute Cloud - Compute"
-- EC2 Other: "EC2 - Other" 
+- EC2 Other: "EC2 - Other"
 - RDS: "Amazon Relational Database Service"
 - S3: "Amazon Simple Storage Service"
 - Lambda: "AWS Lambda"
@@ -169,6 +215,13 @@ Available tools:
 - get_tag_values: Get available tag values
 - get_cost_comparison_drivers: Analyze what drove cost changes
 
+MULTIPLE TOOL CALLS:
+When users ask for "separate" metrics or "both" metrics that AWS doesn't support in a single call:
+- Make MULTIPLE tool calls (return an array of tool calls)
+- Each call should have different metric parameters
+- Examples: "amortized AND blended costs", "separate calls for each metric"
+- AWS Cost Explorer API only supports ONE metric per call
+
 For each query, provide:
 1. tool_name: The appropriate tool to use
 2. parameters: Complete parameters with proper AWS service names
@@ -179,39 +232,43 @@ CRITICAL: Use exact AWS service names in all filter expressions."""
 
     def _fix_service_names(self, filter_expression: Dict[str, Any]) -> Dict[str, Any]:
         """Auto-correct common service name mistakes"""
-        if not filter_expression or 'Dimensions' not in filter_expression:
+        if not filter_expression or "Dimensions" not in filter_expression:
             return filter_expression
-            
-        dimensions = filter_expression['Dimensions']
-        if dimensions.get('Key') == 'SERVICE' and 'Values' in dimensions:
+
+        dimensions = filter_expression["Dimensions"]
+        if dimensions.get("Key") == "SERVICE" and "Values" in dimensions:
             corrected_values = []
-            for value in dimensions['Values']:
+            for value in dimensions["Values"]:
                 # Try exact mapping first
                 if value in self.service_name_mappings:
                     corrected_values.append(self.service_name_mappings[value])
-                    print(f"Auto-corrected service name: '{value}' -> '{self.service_name_mappings[value]}'")
+                    print(
+                        f"Auto-corrected service name: '{value}' -> '{self.service_name_mappings[value]}'"
+                    )
                 else:
                     corrected_values.append(value)
-            dimensions['Values'] = corrected_values
-            
-        elif dimensions.get('Key') == 'PURCHASE_TYPE' and 'Values' in dimensions:
+            dimensions["Values"] = corrected_values
+
+        elif dimensions.get("Key") == "PURCHASE_TYPE" and "Values" in dimensions:
             corrected_values = []
-            for value in dimensions['Values']:
+            for value in dimensions["Values"]:
                 if value in self.purchase_type_mappings:
                     corrected_values.append(self.purchase_type_mappings[value])
-                    print(f"Auto-corrected purchase type: '{value}' -> '{self.purchase_type_mappings[value]}'")
+                    print(
+                        f"Auto-corrected purchase type: '{value}' -> '{self.purchase_type_mappings[value]}'"
+                    )
                 else:
                     corrected_values.append(value)
-            dimensions['Values'] = corrected_values
-            
+            dimensions["Values"] = corrected_values
+
         return filter_expression
 
     async def process_query(self, query: str, model: Optional[str] = None) -> Dict[str, Any]:
         """Process query with enhanced auto-correction"""
         model_id = self.model_ids.get(model or self.default_model)
-        
+
         system_prompt = self._get_enhanced_system_prompt()
-        
+
         # Enhanced user prompt with examples
         user_prompt = f"""
 Query: "{query}"
@@ -246,42 +303,71 @@ Respond with JSON containing:
             "max_tokens": 4000,
             "system": system_prompt,
             "messages": [{"role": "user", "content": user_prompt}],
-            "temperature": 0.1,
+            "temperature": 0.1,  # Cold temperature to avoid hallucinations
         }
 
         try:
             response = self._invoke_model_with_retry(model_id, request_body)
             response_body = json.loads(response["body"].read())
-            
+
             if "content" in response_body and response_body["content"]:
                 content = response_body["content"][0]["text"]
-                
+
                 # Parse JSON response
                 try:
-                    # Extract JSON from response
-                    json_start = content.find('{')
-                    json_end = content.rfind('}') + 1
-                    if json_start != -1 and json_end != -1:
-                        json_content = content[json_start:json_end]
-                        parsed_response = json.loads(json_content)
-                        
-                        # Apply auto-correction to parameters
-                        if 'parameters' in parsed_response and 'filter_expression' in parsed_response['parameters']:
-                            parsed_response['parameters']['filter_expression'] = self._fix_service_names(
-                                parsed_response['parameters']['filter_expression']
-                            )
-                        
-                        return parsed_response
+                    # Handle JSON wrapped in markdown code blocks
+                    if "```json" in content:
+                        # Extract JSON from markdown code block
+                        json_start = content.find("```json") + 7
+                        json_end = content.find("```", json_start)
+                        if json_start != -1 and json_end != -1:
+                            json_content = content[json_start:json_end].strip()
+                        else:
+                            raise ValueError("Malformed markdown code block")
                     else:
-                        raise ValueError("No valid JSON found in response")
-                        
+                        # Handle regular JSON (existing logic)
+                        json_start = content.find("{")
+                        json_end = content.rfind("}") + 1
+                        if json_start != -1 and json_end != -1:
+                            json_content = content[json_start:json_end]
+                        else:
+                            raise ValueError("No valid JSON found in response")
+                    
+                    parsed_response = json.loads(json_content)
+
+                    # Apply auto-correction to parameters
+                    if isinstance(parsed_response, dict) and (
+                        "parameters" in parsed_response
+                        and "filter_expression" in parsed_response["parameters"]
+                    ):
+                        parsed_response["parameters"]["filter_expression"] = (
+                            self._fix_service_names(
+                                parsed_response["parameters"]["filter_expression"]
+                            )
+                        )
+                    elif isinstance(parsed_response, list):
+                        # Handle multiple tool calls
+                        for call in parsed_response:
+                            if (
+                                isinstance(call, dict)
+                                and "parameters" in call
+                                and "filter_expression" in call["parameters"]
+                            ):
+                                call["parameters"]["filter_expression"] = (
+                                    self._fix_service_names(
+                                        call["parameters"]["filter_expression"]
+                                    )
+                                )
+
+                    return parsed_response
+
                 except json.JSONDecodeError as e:
                     print(f"JSON parsing error: {e}")
                     print(f"Raw content: {content}")
                     raise ValueError(f"Failed to parse JSON response: {e}")
             else:
                 raise ValueError("No content in response")
-                
+
         except Exception as e:
             print(f"Error in process_query: {e}")
             raise
@@ -289,9 +375,9 @@ Respond with JSON containing:
     async def generate_explanation(self, query: str, tool_result: Dict[str, Any]) -> str:
         """Generate natural language explanation of results"""
         model_id = self.model_ids.get(self.default_model)
-        
+
         system_prompt = """You are an AWS cost analysis expert. Provide clear, concise explanations of cost data results."""
-        
+
         user_prompt = f"""
 Original query: "{query}"
 
@@ -310,18 +396,18 @@ Keep it concise but informative.
             "max_tokens": 1000,
             "system": system_prompt,
             "messages": [{"role": "user", "content": user_prompt}],
-            "temperature": 0.3,
+            "temperature": 0.3,  # Warmer temperature to sound more human-like, can be reduced for more concise explanations
         }
 
         try:
             response = self._invoke_model_with_retry(model_id, request_body)
             response_body = json.loads(response["body"].read())
-            
+
             if "content" in response_body and response_body["content"]:
                 return response_body["content"][0]["text"]
             else:
                 return "Unable to generate explanation."
-                
+
         except Exception as e:
             print(f"Error generating explanation: {e}")
             return f"Error generating explanation: {str(e)}"

@@ -40,8 +40,8 @@
                         id="model-selector" 
                         class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                     >
-                        <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Recommended)</option>
                         <option value="claude-opus-4-1">Claude 4.1 Opus (Most Advanced)</option>
+                        <option value="claude-sonnet-4">Claude Sonnet 4 (Recommended)</option>  
                     </select>
                     <div class="text-xs text-gray-500 max-w-xs">
                         <span id="model-description">Faster responses for shorter queries and basic analysis</span>
@@ -950,7 +950,7 @@
         const modelDescription = document.getElementById('model-description');
         
         const modelDescriptions = {
-            'claude-3-5-sonnet': 'Recommended for most queries - reliable filtering and fast responses',
+            'claude-sonnet-4': 'Recommended for most queries - reliable filtering and fast responses',
             'claude-opus-4-1': 'Most advanced model with best reasoning capabilities for complex analysis'
         };
         

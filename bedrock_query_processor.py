@@ -16,10 +16,7 @@ class BedrockQueryProcessor:
         # Available Claude models in Bedrock (using model IDs and inference profiles)
         self.model_ids = {
             "claude-opus-4-1": "anthropic.claude-opus-4-1-20250805-v1:0",  # Claude 4.1 primary
-            "claude-3-5-sonnet": "anthropic.claude-3-5-sonnet-20240620-v1:0",
-            "claude-3-opus": "anthropic.claude-3-opus-20240229-v1:0",
-            "claude-3-sonnet": "anthropic.claude-3-sonnet-20240229-v1:0",
-            "claude-3-haiku": "anthropic.claude-3-haiku-20240307-v1:0",
+            "claude-sonnet-4": "anthropic.claude-sonnet-4-20250514-v1:0",
         }
         # Common inference profile formats to try for Claude 4.1
         self.claude_4_1_profiles = [
@@ -27,17 +24,19 @@ class BedrockQueryProcessor:
             f"arn:aws:bedrock:{region_name}::inference-profile/us.anthropic.claude-opus-4-1-20250805-v1:0",  # ARN format
             "anthropic.claude-opus-4-1-20250805-v1:0",  # Direct format (fallback)
         ]
-        self.default_model = "claude-3-5-sonnet"  # Default to faster Claude 3.5 Sonnet
+        self.default_model = "claude-opus-4-1"  # Default to most accurate Claude 4.1 Opus
 
     def _invoke_model_with_retry(self, model_id: str, request_body: dict) -> dict:
         """Invoke Bedrock model with Claude 4.1 inference profile retry logic"""
-        
+
         # If it's Claude 4.1, try different inference profile formats
         if "claude-opus-4-1" in model_id:
             print(f"Claude 4.1 requested, trying {len(self.claude_4_1_profiles)} profiles...")
             for i, profile_id in enumerate(self.claude_4_1_profiles):
                 try:
-                    print(f"Attempting Claude 4.1 profile {i+1}/{len(self.claude_4_1_profiles)}: {profile_id}")
+                    print(
+                        f"Attempting Claude 4.1 profile {i + 1}/{len(self.claude_4_1_profiles)}: {profile_id}"
+                    )
                     response = self.bedrock.invoke_model(
                         modelId=profile_id,
                         contentType="application/json",
@@ -48,19 +47,21 @@ class BedrockQueryProcessor:
                     return response
                 except Exception as e:
                     error_msg = str(e)
-                    print(f"Claude 4.1 profile {i+1} failed: {error_msg}")
-                    
+                    print(f"Claude 4.1 profile {i + 1} failed: {error_msg}")
+
                     # Check if it's a throughput/profile error
                     if "on-demand throughput" in error_msg or "inference profile" in error_msg:
-                        print(f"Profile {i+1} failed due to throughput/profile issue, trying next...")
+                        print(
+                            f"Profile {i + 1} failed due to throughput/profile issue, trying next..."
+                        )
                         continue
                     else:
                         # If it's a different error, re-raise it
                         raise e
-            
-            # If all Claude 4.1 profiles failed, fall back to Claude 3.5 Sonnet
-            print("All Claude 4.1 profiles failed, falling back to Claude 3.5 Sonnet")
-            fallback_model_id = self.model_ids["claude-3-5-sonnet"]
+
+            # If all Claude 4.1 profiles failed, fall back to Claude Sonnet 4
+            print("All Claude 4.1 profiles failed, falling back to Claude Sonnet 4")
+            fallback_model_id = self.model_ids["claude-sonnet-4"]
             return self.bedrock.invoke_model(
                 modelId=fallback_model_id,
                 contentType="application/json",
@@ -82,7 +83,8 @@ class BedrockQueryProcessor:
         model_id = self.model_ids.get(model or self.default_model)
 
         current_date = datetime.now().strftime("%Y-%m-%d")
-        system_prompt = """You are an AWS Cost Explorer query processor.
+        system_prompt = (
+            """You are an AWS Cost Explorer query processor.
 
 CRITICAL FILTERING RULES - READ FIRST
 
@@ -93,7 +95,7 @@ RULE 1: When user mentions a SPECIFIC TAG VALUE (like "squad-one-jam", "producti
 
 RULE 2: Tag Value Detection - These phrases REQUIRE filtering:
 - "costs for [tag-value]" → MUST filter by that tag value
-- "show me [tag-value] costs" → MUST filter by that tag value  
+- "show me [tag-value] costs" → MUST filter by that tag value
 - "[tag-value] deployment.environment tag" → MUST filter by that tag value
 - "[tag-value] environment" → MUST filter by that tag value
 - "untagged" or "no tag" or "missing tag" → Use empty string "" as the tag value
@@ -131,7 +133,7 @@ When user asks for costs for a specific tag value, use this EXACT template:
 }}
 
 For "squad-one-jam deployment.environment tag":
-- REPLACE_WITH_TAG_KEY = "deployment.environment"  
+- REPLACE_WITH_TAG_KEY = "deployment.environment"
 - REPLACE_WITH_TAG_VALUE = "squad-one-jam"
 
 Your job is to analyze natural language queries about AWS costs and return structured JSON responses that specify:
@@ -179,7 +181,7 @@ TAG FORMAT EXAMPLES - COPY THESE EXACTLY:
 
 CRITICAL: Tag Discovery Queries:
 - "What tag keys are available" → Use get_dimension_values with dimension_key: "TAG"
-- "List available tags" → Use get_dimension_values with dimension_key: "TAG" 
+- "List available tags" → Use get_dimension_values with dimension_key: "TAG"
 - "Show me tag keys" → Use get_dimension_values with dimension_key: "TAG"
 
 CRITICAL: Filter Expression Format - THIS IS MANDATORY!:
@@ -192,7 +194,7 @@ CRITICAL: Filter Expression Format - THIS IS MANDATORY!:
 
 CRITICAL: Tag Comparison vs Time Period Comparison:
 - "Which tag VALUES are more expensive" (same tag key) → Use get_cost_and_usage grouped by that tag
-- "Compare costs between July and August" → Use get_cost_and_usage_comparisons (compares time periods)  
+- "Compare costs between July and August" → Use get_cost_and_usage_comparisons (compares time periods)
 - "wk.cat.service vs wk.cat.repository" (different tag keys) → Use get_cost_and_usage filtered by first tag only, explain limitation
 - "This month vs last month" → Use get_cost_and_usage_comparisons (time comparison)
 
@@ -202,7 +204,7 @@ For "wk.cat.service vs wk.cat.repository" queries, focus on one tag and explain 
 Always return valid JSON with this structure:
 {
     "query_type": "cost_analysis|forecast|comparison|meta",
-    "tool_name": "tool_name_here", 
+    "tool_name": "tool_name_here",
     "parameters": {
         "date_range": {"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD"},
         "granularity": "DAILY|MONTHLY|HOURLY",
@@ -218,9 +220,13 @@ Always return valid JSON with this structure:
     "explanation": "Natural language explanation of what will be done"
 }
 
-Current date context: """ + current_date
+Current date context: """
+            + current_date
+        )
 
-        user_prompt = f"MANDATORY CHECK: Does the query \"{query}\" mention any specific tag value?\nIf YES: You MUST use group_by TAG format and include filter_expression!\n\nAnalyze this AWS cost query and return the structured JSON response:\n\nQuery: \"{query}\"\n\nExamples with EXACT parameter formats:" + """
+        user_prompt = (
+            f'MANDATORY CHECK: Does the query "{query}" mention any specific tag value?\nIf YES: You MUST use group_by TAG format and include filter_expression!\n\nAnalyze this AWS cost query and return the structured JSON response:\n\nQuery: "{query}"\n\nExamples with EXACT parameter formats:'
+            + """
 
 1. Cost Analysis Query:
 "Show my EC2 costs last month" →
@@ -263,7 +269,7 @@ Current date context: """ + current_date
 
 "Give me costs by wk.cat.owner tags" →
 {{
-  "query_type": "cost_analysis", 
+  "query_type": "cost_analysis",
   "tool_name": "get_cost_and_usage",
   "parameters": {{
     "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
@@ -277,7 +283,7 @@ FILTERING EXAMPLE - COPY THIS PATTERN:
 "Give me costs for squad-one-jam deployment.environment tag" →
 {{
   "query_type": "cost_analysis",
-  "tool_name": "get_cost_and_usage", 
+  "tool_name": "get_cost_and_usage",
   "parameters": {{
     "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
     "granularity": "MONTHLY",
@@ -290,7 +296,7 @@ FILTERING EXAMPLE - COPY THIS PATTERN:
 "Show me production environment costs" →
 {{
   "query_type": "cost_analysis",
-  "tool_name": "get_cost_and_usage", 
+  "tool_name": "get_cost_and_usage",
   "parameters": {{
     "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
     "granularity": "MONTHLY",
@@ -303,7 +309,7 @@ FILTERING EXAMPLE - COPY THIS PATTERN:
 "What deployment.environment costs are untagged?" →
 {{
   "query_type": "cost_analysis",
-  "tool_name": "get_cost_and_usage", 
+  "tool_name": "get_cost_and_usage",
   "parameters": {{
     "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
     "granularity": "MONTHLY",
@@ -327,11 +333,11 @@ FILTERING EXAMPLE - COPY THIS PATTERN:
 1d. Tag Key Comparison Query (Limited):
 "Which tag was more expensive for last month, wk.cat.service, or wk.cat.repository?" →
 {{
-  "query_type": "cost_analysis", 
+  "query_type": "cost_analysis",
   "tool_name": "get_cost_and_usage",
   "parameters": {{
     "date_range": {{"start_date": "YYYY-MM-01", "end_date": "YYYY-MM-31"}},
-    "granularity": "MONTHLY", 
+    "granularity": "MONTHLY",
     "metric": "NetAmortizedCost",
     "group_by": "SERVICE"
   }},
@@ -398,7 +404,7 @@ CRITICAL FORMAT REQUIREMENTS:
 - dimension: Use OBJECT like {{"dimension_key": "SERVICE"}}, NOT string
 - GROUP BY LOGIC: Use "SERVICE" for cost breakdowns, "LINKED_ACCOUNT" only when explicitly asking to compare accounts
 - Comparisons: MUST have both "baseline_date_range" AND "comparison_date_range"
-- AWS DATE REQUIREMENT: 
+- AWS DATE REQUIREMENT:
   * For SINGLE MONTH queries: end_date MUST be BEFORE the beginning of next month (e.g., "2025-09-30" for September)
   * For COMPARISON queries: end_date MUST be first day of next month (e.g., "2025-10-01" for September)
   * WRONG single month: {{"start_date": "2025-09-01", "end_date": "2025-10-01"}}
@@ -426,6 +432,7 @@ FINAL CHECK BEFORE RESPONDING:
 3. Is filter_expression missing when user asks for specific tag value?
    → If YES: This is WRONG - add filter_expression
 """
+        )
 
         try:
             # Prepare request for Claude via Bedrock
@@ -506,9 +513,7 @@ Keep it conversational and helpful, under 500 words.
                 "parameters": {
                     "date_range": {
                         "start_date": datetime.now().strftime("%Y-%m-%d"),
-                        "end_date": (datetime.now() + timedelta(days=30)).strftime(
-                            "%Y-%m-%d"
-                        ),
+                        "end_date": (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d"),
                     },
                     "granularity": "MONTHLY",
                     "metric": "NET_AMORTIZED_COST",  # Forecast API uses different format
@@ -538,9 +543,7 @@ Keep it conversational and helpful, under 500 words.
                 "tool_name": "get_cost_and_usage",
                 "parameters": {
                     "date_range": {
-                        "start_date": (datetime.now() - timedelta(days=30)).strftime(
-                            "%Y-%m-%d"
-                        ),
+                        "start_date": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
                         "end_date": datetime.now().strftime("%Y-%m-%d"),
                     },
                     "granularity": "DAILY",

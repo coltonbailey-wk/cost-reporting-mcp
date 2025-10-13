@@ -44,9 +44,7 @@ class OfficialMCPClient:
         try:
             self.llm_processor = BedrockQueryProcessor()
             print("AWS Bedrock Claude Query Processor initialized successfully!")
-            print(
-                "   Using your existing AWS credentials - no additional API keys needed!"
-            )
+            print("   Using your existing AWS credentials - no additional API keys needed!")
         except Exception as e:
             print(f"Bedrock Claude initialization failed: {e}")
             print("Falling back to keyword-based processing.")
@@ -59,9 +57,7 @@ class OfficialMCPClient:
             # This is needed for MCP
             env = {
                 **{
-                    k: v
-                    for k, v in os.environ.items()
-                    if not k.startswith("AWS_PROFILE")
+                    k: v for k, v in os.environ.items() if not k.startswith("AWS_PROFILE")
                 },  # Remove any AWS_PROFILE
                 "PATH": f"{os.environ.get('HOME', '')}/.local/bin:{os.environ.get('PATH', '')}",
                 "AWS_REGION": os.environ.get("AWS_REGION", "us-east-1"),
@@ -76,9 +72,7 @@ class OfficialMCPClient:
                 text=True,
                 env=env,
             )
-            await asyncio.sleep(
-                5
-            )  # Give it more time to start, not sure if this is needed
+            await asyncio.sleep(5)  # Give it more time to start, not sure if this is needed
             await self.load_tools()
             return True
         except Exception as e:
@@ -121,9 +115,7 @@ class OfficialMCPClient:
                 "method": "notifications/initialized",
             }
 
-            print(
-                f"Sending initialized notification: {json.dumps(initialized_notification)}"
-            )
+            print(f"Sending initialized notification: {json.dumps(initialized_notification)}")
             self.mcp_process.stdin.write(json.dumps(initialized_notification) + "\n")
             self.mcp_process.stdin.flush()
 
@@ -164,9 +156,7 @@ class OfficialMCPClient:
             print(f"Failed to load tools: {e}")
             return False
 
-    async def call_tool(
-        self, tool_name: str, parameters: Dict[str, Any] = None
-    ) -> Dict[str, Any]:
+    async def call_tool(self, tool_name: str, parameters: Dict[str, Any] = None) -> Dict[str, Any]:
         """Call a specific MCP tool"""
         try:
             if not self.mcp_process:
@@ -185,7 +175,21 @@ class OfficialMCPClient:
 
             response_line = self.mcp_process.stdout.readline()
             print(f"Tool call response: {response_line.strip()}")
-            response = json.loads(response_line.strip())
+            
+            # Handle empty responses
+            if not response_line.strip():
+                return {
+                    "success": False,
+                    "error": "Empty response from MCP server"
+                }
+            
+            try:
+                response = json.loads(response_line.strip())
+            except json.JSONDecodeError as e:
+                return {
+                    "success": False,
+                    "error": f"Invalid JSON response from MCP server: {str(e)}"
+                }
 
             if "result" in response:
                 # Handle different response formats
@@ -196,6 +200,12 @@ class OfficialMCPClient:
                         # Handle potential JSON serialization issues with float values
                         return self._sanitize_json_response(parsed_content)
                     except json.JSONDecodeError as e:
+                        # Check if it's a validation error message
+                        if "validation error" in content.lower() or "error executing tool" in content.lower():
+                            return {
+                                "success": False,
+                                "error": content.strip()
+                            }
                         return {
                             "success": False,
                             "error": f"Failed to parse MCP response: {str(e)}",
@@ -413,7 +423,9 @@ class OfficialMCPClient:
     #     # Default to cost analysis for longer queries
     #     return 'cost_analysis'
 
-    async def execute_enhanced_query(self, query: str, model: Optional[str] = None) -> Dict[str, Any]:
+    async def execute_enhanced_query(
+        self, query: str, model: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Execute query with LLM-enhanced understanding"""
         import hashlib
         import time
@@ -449,19 +461,50 @@ class OfficialMCPClient:
             try:
                 # Use LLM to understand the query
                 parsed_query = await self.llm_processor.process_query(query, model=model)
-                print(
-                    f"[{query_id}] Bedrock parsed: {parsed_query.get('tool_name', 'unknown')} with metric: {parsed_query.get('parameters', {}).get('metric', 'unknown')}"
-                )
+                
+                # Handle both single tool call and multiple tool calls
+                if isinstance(parsed_query, list):
+                    # Multiple tool calls - execute each one
+                    print(f"[{query_id}] Multiple tool calls detected: {len(parsed_query)}")
+                    tool_results = []
+                    
+                    for i, call in enumerate(parsed_query):
+                        print(f"[{query_id}] Executing tool call {i+1}/{len(parsed_query)}: {call.get('tool_name', 'unknown')} with metric: {call.get('parameters', {}).get('metric', 'unknown')}")
+                        
+                        result = await self.call_tool(call["tool_name"], call["parameters"])
+                        tool_results.append({
+                            "tool_call": call,
+                            "result": result,
+                            "call_index": i + 1
+                        })
+                    
+                    # Use the first result for explanation generation
+                    tool_result = tool_results[0]["result"] if tool_results else {"error": "No tool calls executed"}
+                    explanation = await self.llm_processor.generate_explanation(query, tool_result)
+                    
+                    return {
+                        "success": True,
+                        "query": query,
+                        "tool_calls": parsed_query,
+                        "tool_results": tool_results,
+                        "explanation": explanation,
+                        "_query_id": query_id,
+                        "_original_query": query,
+                        "_note": f"Multiple tool calls executed ({len(parsed_query)})"
+                    }
+                else:
+                    # Single tool call - original behavior
+                    print(
+                        f"[{query_id}] Bedrock parsed: {parsed_query.get('tool_name', 'unknown')} with metric: {parsed_query.get('parameters', {}).get('metric', 'unknown')}"
+                    )
 
-                # Execute the recommended tool with parameters
-                tool_result = await self.call_tool(
-                    parsed_query["tool_name"], parsed_query["parameters"]
-                )
+                    # Execute the recommended tool with parameters
+                    tool_result = await self.call_tool(
+                        parsed_query["tool_name"], parsed_query["parameters"]
+                    )
 
-                # Generate natural language explanation
-                explanation = await self.llm_processor.generate_explanation(
-                    query, tool_result
-                )
+                    # Generate natural language explanation
+                    explanation = await self.llm_processor.generate_explanation(query, tool_result)
 
                 # Combine results
                 return {
@@ -627,10 +670,7 @@ class OfficialMCPClient:
         query_lower = query.lower()
 
         # AWS Account information WITHOUT using the MCP server
-        if any(
-            keyword in query_lower
-            for keyword in ["account", "which account", "what account"]
-        ):
+        if any(keyword in query_lower for keyword in ["account", "which account", "what account"]):
             try:
                 # Try to get account info from STS
                 import boto3
@@ -684,10 +724,7 @@ class OfficialMCPClient:
                 }
 
         # Tool capabilities
-        elif any(
-            keyword in query_lower
-            for keyword in ["what can you do", "capabilities", "help"]
-        ):
+        elif any(keyword in query_lower for keyword in ["what can you do", "capabilities", "help"]):
             return {
                 "success": True,
                 "data": {
@@ -797,9 +834,7 @@ async def startup_event():
     """Initialize official MCP server on startup"""
     success = await mcp_client.start_mcp_server()
     if not success:
-        print(
-            "WARNING: Failed to start official MCP server. Cost analysis queries will fail."
-        )
+        print("WARNING: Failed to start official MCP server. Cost analysis queries will fail.")
         print("Please ensure 'uvx' is installed and AWS credentials are configured.")
     else:
         print("Official AWS Cost Explorer MCP server started successfully!")
@@ -837,9 +872,7 @@ async def execute_management_query(query: MCPQuery, response: Response):
             "query": query.query,
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error executing management query: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error executing management query: {str(e)}")
 
 
 if __name__ == "__main__":

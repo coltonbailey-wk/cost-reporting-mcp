@@ -20,7 +20,7 @@ class ModelBenchmark:
         self.enhanced_processor = EnhancedBedrockQueryProcessor()
         self.mcp_client = OfficialMCPClient()
         
-        self.models = ["claude-opus-4-1", "claude-3-5-sonnet"]
+        self.models = ["claude-opus-4-1", "claude-sonnet-4"]
         
         # Comprehensive test queries across all difficulty levels
         self.test_queries = [
@@ -266,7 +266,7 @@ class ModelBenchmark:
     async def run_benchmark(self) -> Dict[str, Any]:
         """Run benchmark for Claude 4.1 Opus and Claude 3.5 Sonnet"""
         print("MODEL BENCHMARK")
-        print("Testing Claude 4.1 Opus vs Claude 3.5 Sonnet")
+        print("Testing Claude 4.1 Opus vs Claude Sonnet 4")
         print("=" * 60)
         
         all_results = []
@@ -342,11 +342,11 @@ class ModelBenchmark:
         summary = results["summary"]
         
         # Overall comparison table
-        print(f"\n{'Metric':<25} {'Claude 4.1 Opus':<20} {'Claude 3.5 Sonnet':<20} {'Winner':<15}")
+        print(f"\n{'Metric':<25} {'Claude 4.1 Opus':<20} {'Claude Sonnet 4':<20} {'Winner':<15}")
         print("-" * 85)
         
         opus_data = summary.get("claude-opus-4-1", {})
-        sonnet_data = summary.get("claude-3-5-sonnet", {})
+        sonnet_data = summary.get("claude-sonnet-4", {})
         
         # Success Rate
         opus_success = opus_data.get("success_rate", 0) * 100
@@ -433,3 +433,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    

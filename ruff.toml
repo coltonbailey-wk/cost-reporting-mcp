@@ -1,0 +1,26 @@
+# Ruff configuration file
+# See: https://docs.astral.sh/ruff/configuration/
+
+line-length = 100
+target-version = "py38"
+
+[lint]
+# Enable Pyflakes (F), pycodestyle (E, W), and isort (I)
+select = ["E", "F", "W", "I"]
+
+# Ignore specific rules
+ignore = [
+    "E203",  # Whitespace before ':' (conflicts with black/ruff formatter)
+    "E501",  # Line too long (let formatter handle this)
+]
+
+[format]
+# Use double quotes for strings
+quote-style = "double"
+
+# Indent with spaces
+indent-style = "space"
+
+# Use Unix line endings
+line-ending = "lf"
+
