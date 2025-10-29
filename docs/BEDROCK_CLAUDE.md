@@ -26,18 +26,21 @@ AWS Bedrock Claude Query Processor initialized
 
 Based on comprehensive parameter quality benchmarking, the integration uses two Claude models:
 
-| Model | Bedrock ID | Parameter Quality | Speed | Best For |
-|-------|------------|------------------|-------|----------|
-| **Claude 4.1 Opus** | `anthropic.claude-opus-4-1-20250805-v1:0` | Highest accuracy | Slower | **All queries (default)** |
-| **Claude 3.5 Sonnet** | `anthropic.claude-3-5-sonnet-20240620-v1:0` | Inconsistent | Faster | Optional for simple queries |
+| Model | Bedrock ID | Quality Score | Avg Response Time | Success Rate | Best For |
+|-------|------------|--------------|-------------------|--------------|----------|
+| **Claude Sonnet 4** | `anthropic.claude-sonnet-4-20250514-v1:0` | **98.1%** | **4.6s** | **100%** | **All queries (recommended)** |
+| **Claude 4.1 Opus** | `anthropic.claude-opus-4-1-20250805-v1:0` | 98.1% | 16.3s | 100% | Alternative |
 
-**Default Model**: Claude 4.1 Opus
+**Default Model**: Claude Sonnet 4 *(Updated October 2025 based on benchmark results)*
+- 98.1% parameter quality score (equal to Opus)
+- 3.6x faster than Opus (4.6s vs 16.3s average)
+- 100% success rate across all query types
 - Consistently generates correct AWS service names
 - Proper filter expression construction
 - Accurate purchase type terminology
-- Reliable across all query complexity levels
+- Reliable across all query complexity levels (EASY, MEDIUM, HARD, EXPERT)
 
-**Why Opus?** For financial cost analysis, parameter accuracy is more important than response speed. Incorrect parameters can lead to wrong cost insights, which is unacceptable for financial tooling.
+**Why Sonnet 4?** October 2025 benchmarking revealed that Sonnet 4 achieves **equal parameter quality** to Opus while being **significantly faster**. For cost analysis, we can now have both accuracy AND performance.
 
 **Claude 3.5 Haiku**: Removed from production due to 0% parameter quality accuracy. Cannot reliably generate correct filter expressions.
 
@@ -60,7 +63,7 @@ The application uses a comprehensive benchmark to validate model selection:
 - Purchase Types (10 pts): Correct terminology
 - Expected Match (30 pts): Returns expected results
 
-**Results:** Claude 4.1 Opus demonstrates consistently superior parameter quality across all query types.
+**Results (October 2025):** Both Claude Sonnet 4 and Opus achieve ~98.1% parameter quality, with Sonnet 4 being 3.6x faster (4.6s vs 16.3s average).
 
 ## **Cost & Performance Benefits**
 
@@ -181,21 +184,21 @@ The system uses a robust processing pipeline:
 - **Error Recovery**: System gracefully handles Bedrock errors with informative fallbacks
 
 ### **Performance & Cost**
-- **Processing Speed**: Claude 4.1 Opus is slower but prioritizes accuracy for financial data
-- **Cost Efficiency**: Higher token cost justified by superior parameter quality
-- **Quality First**: For cost analysis, accurate parameters matter more than response speed
-- **User Choice**: Sonnet available as faster option with lower accuracy
+- **Processing Speed**: Claude Sonnet 4 recommended (4.6s average, ~3.6x faster than Opus)
+- **Cost Efficiency**: Sonnet 4 provides best cost-per-query value with equal quality
+- **Best of Both**: Sonnet 4 delivers both speed AND accuracy (98.1% quality score)
+- **User Choice**: Opus available for scenarios requiring maximum model capability
 
 ## **Ready to Use!**
 
 The enhanced AWS Cost Explorer dashboard is now a fully-featured, cost analysis platform:
 
 **Key Achievements:**
-- **Benchmark-Validated Model Selection**: Claude 4.1 Opus default based on parameter quality testing
+- **Benchmark-Validated Model Selection**: Claude Sonnet 4 recommended (Oct 2025) - 98.1% quality, 3.6x faster than Opus
 - **AWS Bedrock Integration**: Streamlined, no external dependencies
-- **Accurate Parameter Generation**: Consistently correct AWS service names and filters
+- **Accurate Parameter Generation**: 100% success rate with consistently correct AWS service names and filters
 - **Enhanced Query Processing**: Auto-correction for common terminology mistakes
-- **Comprehensive Testing**: 100-point quality scoring validates all queries
+- **Comprehensive Testing**: 16-query benchmark validates equal quality with superior performance
 - **Production Quality**: Clean codebase with comprehensive documentation
 
 **Perfect for:**

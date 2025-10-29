@@ -14,7 +14,7 @@ from bedrock_query_processor_enhanced import EnhancedBedrockQueryProcessor
 from web_app import OfficialMCPClient
 
 
-# Benchmark testing for Opus 4.1 and Sonnet 3.5 to test their speed and accuracy
+# Benchmark testing for Opus 4.1 and Sonnet 4 to test their speed and accuracy
 class ModelBenchmark:
     def __init__(self):
         self.enhanced_processor = EnhancedBedrockQueryProcessor()
@@ -185,6 +185,10 @@ class ModelBenchmark:
                 "analysis": "Failed"
             }
         
+        # Handle case where result is a list (multiple queries) - use first item
+        if isinstance(result, list):
+            result = result[0] if result else {}
+        
         parameters = result.get("parameters", {})
         filter_expr = parameters.get("filter_expression", {})
         
@@ -264,7 +268,7 @@ class ModelBenchmark:
         return analysis
 
     async def run_benchmark(self) -> Dict[str, Any]:
-        """Run benchmark for Claude 4.1 Opus and Claude 3.5 Sonnet"""
+        """Run benchmark for Claude 4.1 Opus and Claude Sonnet 4"""
         print("MODEL BENCHMARK")
         print("Testing Claude 4.1 Opus vs Claude Sonnet 4")
         print("=" * 60)
@@ -388,7 +392,7 @@ class ModelBenchmark:
             print("Claude 4.1 Opus - Superior accuracy justifies longer response time")
             print("Best for: Production environments where accuracy is critical")
         elif sonnet_time < opus_time * 0.7 and abs(opus_quality - sonnet_quality) < 5: 
-            print("Claude 3.5 Sonnet - Good balance of speed and accuracy")
+            print("Claude Sonnet 4 - Good balance of speed and accuracy")
             print("Best for: Interactive applications where response time matters")
         else:
             print("Both models have trade-offs - choose based on your priorities:")
@@ -412,7 +416,7 @@ async def main():
     benchmark = ModelBenchmark()
     
     print("Starting Model Benchmark")
-    print("Comparing Claude 4.1 Opus vs Claude 3.5 Sonnet across all query types")
+    print("Comparing Claude 4.1 Opus vs Claude Sonnet 4 across all query types")
     
     # Run the benchmark
     results = await benchmark.run_benchmark()

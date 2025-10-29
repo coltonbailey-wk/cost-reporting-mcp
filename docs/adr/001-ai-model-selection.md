@@ -1,7 +1,8 @@
 # ADR-001: AI Model Selection for Cost Explorer Application
 
 ## Status
-**Accepted** - October 6, 2025
+**Updated** - October 27, 2025 (Benchmark results changed recommendation to Claude Sonnet 4)  
+**Originally Accepted** - October 6, 2025
 
 ## Context
 
@@ -16,33 +17,45 @@ The application integrates with AWS Bedrock Claude models to provide:
 
 ## Decision
 
-Based on comprehensive parameter quality testing, we have selected **Claude 4.1 Opus** as the primary model:
+Based on comprehensive parameter quality and performance testing (October 2025), we have updated our model recommendation:
 
-### 1. Claude 4.1 Opus (Primary/Default)
+### 1. Claude 4.1 Opus (Alternative/High-Complexity)
 **Model ID:** `anthropic.claude-opus-4-1-20250805-v1:0`
 
 **Strengths:**
-- Highest parameter quality and accuracy
+- Excellent parameter quality and accuracy (98.1% quality score)
 - Correctly uses full AWS service names (not shortcuts)
 - Proper purchase type terminology
 - Reliable filter generation for complex queries
+- 100% success rate across all query types
 
-**Recommendation:** Use as the default model for all cost analysis queries
+**Performance Profile:**
+- EASY queries: 15.9s average
+- MEDIUM queries: 15.3s average
+- HARD queries: 16.1s average
+- EXPERT queries: 17.8s average
+
+**Trade-off:** Equal quality to Sonnet but **3.6x slower** (16.3s vs 4.6s average)
+
+**Recommendation:** Available for scenarios where maximum model capability is prioritized over response time
 
 
-### 2. Claude 3.5 Sonnet (Secondary)
-**Model ID:** `anthropic.claude-3-5-sonnet-20240620-v1:0`
+### 2. Claude Sonnet 4 (Secondary)
+**Model ID:** `anthropic.claude-sonnet-4-20250514-v1:0`
 
 **Strengths:**
-- Faster response times than Opus
-- Acceptable parameter quality for simple queries
+- Significantly faster response times (4.6s vs 16.3s average) - **3.6x faster than Opus**
+- Equal parameter quality to Opus (98.1% quality score)
+- 100% success rate across all query types
+- Excellent performance on complex queries
 
-**Weaknesses:**
-- Inconsistent service name handling
-- Sometimes uses shortcuts instead of full AWS names
-- Lower accuracy on complex filtering
+**Performance Profile:**
+- EASY queries: 3.8s average
+- MEDIUM queries: 4.0s average  
+- HARD queries: 3.9s average
+- EXPERT queries: 6.6s average
 
-**Recommendation:** Available as an option for users who prefer faster responses and accept lower accuracy
+**Recommendation:** **Recommended as primary model** for most use cases given equal quality with significantly better performance
 
 
 ### 3. Claude 3.5 Haiku (Removed)
@@ -94,26 +107,30 @@ The benchmark evaluates how well each model generates AWS Cost Explorer API para
 
 ### Benchmark Results Summary
 
-**Model Performance Comparison:**
+**Model Performance Comparison (October 2025 Benchmark):**
 
-| Model | Parameter Quality | Speed | Cost | Recommendation |
-|-------|------------------|-------|------|----------------|
-| **Claude 4.1 Opus** | Highest accuracy | Slower | Highest | **Primary/Default** |
-| **Claude 3.5 Sonnet** | Inconsistent | Faster | Medium | **Secondary option** |
-| **Claude 3.5 Haiku** | Unreliable (0% accuracy) | Fastest | Lowest | **Removed** |
+| Model | Quality Score | Avg Response Time | Speed vs Opus | Success Rate | Recommendation |
+|-------|--------------|-------------------|---------------|--------------|----------------|
+| **Claude Sonnet 4** | 98.1% | 4.6 seconds | **Baseline** | 100% | **Primary/Recommended** |
+| **Claude 4.1 Opus** | 98.1% | 16.3 seconds | 3.6x slower | 100% | Alternative option |
+| **Claude 3.5 Haiku** | 0% | N/A | N/A | 0% | **Removed** |
 
-**Key Findings:**
+**Key Findings (October 2025 Benchmark):**
 
-1. **Claude 4.1 Opus** demonstrates superior parameter quality
+1. **Claude Sonnet 4** demonstrates excellent parameter quality AND speed
+   - 98.1% quality score (equal to Opus)
+   - 100% success rate across all 16 test queries
+   - 3.6x faster than Opus (4.6s vs 16.3s average)
    - Consistently generates correct AWS service names
    - Properly constructs filter expressions
-   - Uses accurate purchase type terminology
-   - Reliable across all query difficulty levels
+   - Reliable across all query difficulty levels (EASY, MEDIUM, HARD, EXPERT)
 
-2. **Claude 3.5 Sonnet** shows inconsistent parameter generation
-   - Sometimes uses shortcuts ("EC2") instead of full names
-   - Variable filter expression quality
-   - Acceptable for simple queries, unreliable for complex ones
+2. **Claude 4.1 Opus** achieves equal quality but slower performance
+   - 98.1% quality score (equal to Sonnet)
+   - 100% success rate across all 16 test queries
+   - Significantly slower responses (16.3s average)
+   - Excellent parameter generation quality
+   - No meaningful quality advantage over Sonnet in current testing
 
 3. **Claude 3.5 Haiku** fails parameter quality requirements
    - Does not generate filter expressions correctly
@@ -124,12 +141,12 @@ The benchmark evaluates how well each model generates AWS Cost Explorer API para
 
 **AWS Bedrock Pricing (per 1K tokens):**
 - **Claude 3.5 Haiku**: $0.00025 input / $0.00125 output (Removed from use)
-- **Claude 3.5 Sonnet**: $0.003 input / $0.015 output
+- **Claude Sonnet 4**: $0.003 input / $0.015 output
 - **Claude 4.1 Opus**: $0.015 input / $0.075 output
 
 **Cost-Quality Analysis:**
 - **Claude 4.1 Opus**: Higher cost per token, but superior accuracy justifies the expense for cost analysis
-- **Claude 3.5 Sonnet**: Lower cost, but inconsistent parameter quality may lead to incorrect results
+- **Claude Sonnet 4**: Lower cost, but inconsistent parameter quality may lead to incorrect results
 - **Claude 3.5 Haiku**: Cheapest option, but 0% accuracy makes it unusable regardless of price
 
 **Decision:** Accuracy is more important than cost for financial analysis tooling. Using an incorrect model that generates wrong parameters could lead to incorrect cost insights, which is unacceptable.
@@ -165,52 +182,55 @@ The benchmark evaluates how well each model generates AWS Cost Explorer API para
 - External billing adds administrative complexity
 
 **Performance Comparison:**
-- **Query Understanding**: Comparable to Claude 3.5 Sonnet (90-93% accuracy)
+- **Query Understanding**: Claude Sonnet 4 achieves 98.1% accuracy in benchmark testing
 - **AWS-Specific Context**: Claude models show better understanding of AWS cost terminology
-- **Response Time**: 2-4s including network overhead vs 179ms for Claude 3.5 Sonnet (measured)
+- **Response Time**: External APIs add 2-4s overhead vs 4.6s for Claude Sonnet 4 (measured)
 
 ### Response Time Considerations
 
-**Observed Response Times:**
-- **Claude 4.1 Opus**: Slower but consistent
-- **Claude 3.5 Sonnet**: Faster with acceptable latency
-- **Claude 3.5 Haiku**: Fastest but unreliable parameters make speed irrelevant
+**Measured Response Times (October 2025 Benchmark):**
+- **Claude Sonnet 4**: 4.6s average (3.8-6.6s range) - **Recommended**
+- **Claude 4.1 Opus**: 16.3s average (13.4-22.4s range) - 3.6x slower
+- **Claude 3.5 Haiku**: Not tested (removed due to quality issues)
 
-**Performance vs Accuracy Tradeoff:**
-- For cost analysis, accuracy is prioritized over speed
-- Incorrect parameters leading to wrong cost data is worse than slower responses
-- Users prefer reliable results over fast but incorrect ones
+**Performance AND Accuracy Achievement:**
+- October 2025 testing shows **no tradeoff needed** - Sonnet 4 delivers both
+- Both models achieve 98.1% quality score with 100% success rate
+- Sonnet 4 is 3.6x faster while maintaining equal quality
+- For cost analysis, we can have both speed AND accuracy
 
 ### Usage Pattern
 
-**Default Behavior:**
-- Claude 4.1 Opus is the default model for all queries
+**Default Behavior (Updated October 2025):**
+- **Claude Sonnet 4 is now the recommended default** for all queries
+- Delivers equal quality (98.1%) with significantly better performance (3.6x faster)
 
 **User Options:**
-- Users can optionally select Claude 3.5 Sonnet for faster responses
-- Users should understand Sonnet may produce less accurate parameters
+- Users can optionally select Claude 4.1 Opus if maximum model capability is desired
+- Both models achieve 100% success rate and equal parameter quality
 - No option for Haiku due to reliability issues
 
 ## Consequences
 
 ### Positive
-1. **High Accuracy**: Claude 4.1 Opus as default ensures reliable parameter generation
-2. **User Choice**: Sonnet option available for speed-conscious users
-3. **AWS Integration**: Seamless integration with existing AWS infrastructure
-4. **Clear Testing**: Benchmark validates model selection with quantitative data
-5. **Security**: No additional credential management required
+1. **Optimal Performance**: Claude Sonnet 4 as default delivers both speed AND accuracy
+2. **No Trade-offs**: 98.1% quality with 3.6x better performance than Opus
+3. **100% Success Rate**: Both models achieve perfect reliability across all query types
+4. **User Choice**: Opus available for users who prefer maximum model capability
+5. **AWS Integration**: Seamless integration with existing AWS infrastructure
+6. **Validated Selection**: Comprehensive benchmark (16 queries) validates recommendation
+7. **Security**: No additional credential management required
 
 ### Negative
-1. **Higher Cost**: Claude 4.1 Opus has highest token cost
-2. **Slower Responses**: Opus is slower than Sonnet
-3. **AWS Vendor Lock-in**: Tied to AWS Bedrock service availability
-4. **Reduced Options**: Haiku removed due to quality issues
+1. **AWS Vendor Lock-in**: Tied to AWS Bedrock service availability
+2. **Reduced Options**: Haiku removed due to quality issues
+3. **Token Costs**: Both models have associated per-token costs (Sonnet more cost-effective)
 
 ### Mitigation Strategies
-1. **Cost Justification**: Accuracy for financial analysis justifies higher token costs
-2. **Optional Sonnet**: Users can choose faster responses if preferred
-3. **Enhanced Processor**: Auto-correction helps improve Sonnet's parameter quality
-4. **Clear Documentation**: Users understand tradeoffs between models
+1. **Cost Efficiency**: Sonnet 4 as default provides best cost-per-query value
+2. **Optional Opus**: Available for scenarios requiring maximum capability
+3. **Enhanced Processor**: Auto-correction ensures high quality across both models
+4. **Clear Documentation**: Users understand both models deliver equal quality
 
 ## Stakeholder Alignment
 
@@ -264,7 +284,23 @@ Production monitoring should track:
 ## Review Date
 This decision should be reviewed by **April 2026** or when:
 - New Claude models become available in AWS Bedrock
-- Significant parameter quality improvements observed in Sonnet or Haiku
-- Changes in AWS Bedrock pricing significantly alter cost-quality tradeoffs
+- Significant changes in model performance or quality observed
+- Changes in AWS Bedrock pricing significantly alter cost-performance tradeoffs
 - Production data indicates different usage patterns than benchmarks predict
 - User feedback suggests different model preferences
+
+## Revision History
+
+### October 27, 2025 - Model Recommendation Update
+**Changed recommendation from Claude 4.1 Opus to Claude Sonnet 4 based on benchmark results**
+
+**Benchmark Details:**
+- Test Date: October 27, 2025
+- Test Queries: 16 queries across 4 difficulty levels (EASY, MEDIUM, HARD, EXPERT)
+- Success Rate: Both models 100%
+- Quality Score: Both models 98.1%
+- Performance: Sonnet 4 is 3.6x faster (4.6s vs 16.3s average)
+
+**Key Finding:** Sonnet 4 achieves equal parameter quality to Opus while being significantly faster, eliminating the need for a quality vs. speed trade-off.
+
+**Results File:** `test/benchmark_results_20251027_134514.json`

@@ -5,7 +5,7 @@ This directory contains all testing and benchmarking tools for the AWS Cost Expl
 ## Test Files
 
 ### Benchmarking
-- `benchmark.py` - **Main benchmark script** for Claude 4.1 Opus vs Claude 3.5 Sonnet
+- `benchmark.py` - **Main benchmark script** for Claude 4.1 Opus vs Claude Sonnet 4
 
 ## Running the Benchmark
 
@@ -15,7 +15,7 @@ cd test/
 python benchmark.py
 ```
 
-This comprehensive benchmark tests both Claude 4.1 Opus and Claude 3.5 Sonnet across all query difficulties:
+This comprehensive benchmark tests both Claude 4.1 Opus and Claude Sonnet 4 across all query difficulties:
 - **EASY**: Basic service cost queries (EC2, RDS, S3, Lambda)
 - **MEDIUM**: Time-based and grouped requests (last month, current month)
 - **HARD**: Comparisons and complex analysis (cost differences, aggregations)
@@ -71,7 +71,7 @@ This benchmark does **not** validate the actual cost data returned by AWS. It do
 
 The benchmark assumes that if the LLM generates correct parameters (proper service names, filters, and structure), the AWS Cost Explorer API will return accurate data. This is a reasonable assumption since AWS APIs are deterministic.
 
-TODO: create test suite to compare returned results from MCP against boto calls
+`test_suite.py` generates real data to be manually checked by the user.
 
 ## Scoring System
 
