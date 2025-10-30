@@ -19,7 +19,26 @@ The application integrates with AWS Bedrock Claude models to provide:
 
 Based on comprehensive parameter quality and performance testing (October 2025), we have updated our model recommendation:
 
-### 1. Claude 4.1 Opus (Alternative/High-Complexity)
+
+### 1. Claude Sonnet 4 (Primary)
+**Model ID:** `anthropic.claude-sonnet-4-20250514-v1:0`
+
+**Strengths:**
+- Significantly faster response times (4.6s vs 16.3s average) - **3.6x faster than Opus**
+- Equal parameter quality to Opus (98.1% quality score)
+- 100% success rate across all query types
+- Excellent performance on complex queries
+
+**Performance Profile:**
+- EASY queries: 3.8s average
+- MEDIUM queries: 4.0s average  
+- HARD queries: 3.9s average
+- EXPERT queries: 6.6s average
+
+**Recommendation:** **Recommended as primary model** for most use cases given equal quality with significantly better performance
+
+
+### 2. Claude 4.1 Opus (Alternative/High-Complexity)
 **Model ID:** `anthropic.claude-opus-4-1-20250805-v1:0`
 
 **Strengths:**
@@ -38,24 +57,6 @@ Based on comprehensive parameter quality and performance testing (October 2025),
 **Trade-off:** Equal quality to Sonnet but **3.6x slower** (16.3s vs 4.6s average)
 
 **Recommendation:** Available for scenarios where maximum model capability is prioritized over response time
-
-
-### 2. Claude Sonnet 4 (Secondary)
-**Model ID:** `anthropic.claude-sonnet-4-20250514-v1:0`
-
-**Strengths:**
-- Significantly faster response times (4.6s vs 16.3s average) - **3.6x faster than Opus**
-- Equal parameter quality to Opus (98.1% quality score)
-- 100% success rate across all query types
-- Excellent performance on complex queries
-
-**Performance Profile:**
-- EASY queries: 3.8s average
-- MEDIUM queries: 4.0s average  
-- HARD queries: 3.9s average
-- EXPERT queries: 6.6s average
-
-**Recommendation:** **Recommended as primary model** for most use cases given equal quality with significantly better performance
 
 
 ### 3. Claude 3.5 Haiku (Removed)
@@ -117,7 +118,7 @@ The benchmark evaluates how well each model generates AWS Cost Explorer API para
 
 **Key Findings (October 2025 Benchmark):**
 
-1. **Claude Sonnet 4** demonstrates excellent parameter quality AND speed
+1. **Claude Sonnet 4** demonstrates excellent parameter quality and speed
    - 98.1% quality score (equal to Opus)
    - 100% success rate across all 16 test queries
    - 3.6x faster than Opus (4.6s vs 16.3s average)
