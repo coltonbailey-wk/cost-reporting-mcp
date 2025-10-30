@@ -304,4 +304,3 @@ This decision should be reviewed by **April 2026** or when:
 
 **Key Finding:** Sonnet 4 achieves equal parameter quality to Opus while being significantly faster, eliminating the need for a quality vs. speed trade-off.
 
-**Results File:** `test/benchmark_results_20251027_134514.json`
